@@ -23,3 +23,9 @@ def get_company_billing_details(company_id: str):
         "billing": billing,
         "billingInfo": billingInfo
     }
+
+
+def get_all_companies():
+    companies_ref = firestore_client.collection("companies")
+    docs = companies_ref.stream()
+    return [doc.id for doc in docs]

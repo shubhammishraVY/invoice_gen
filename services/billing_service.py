@@ -3,29 +3,77 @@ from repositories.calls_repo import get_calls_from_top_level, get_calls_from_com
 from repositories.companies_repo import get_company_billing_details
 from repositories.invoice_repo import save_invoice,get_invoice
 import math
+from repositories.companies_repo import get_all_companies
+
+# Use the current time for reference
+NOW = datetime.now(timezone.utc)
+
+
+
+
+
+def generate_monthly_invoices_for_all():
+    """Generate invoices for all companies for the previous month."""
+    now = datetime.now(timezone.utc)
+    last_month_date = (now.replace(day=1) - timedelta(days=1))
+
+    month = last_month_date.month
+    year = last_month_date.year
+
+    companies = get_all_companies()
+    invoices = []
+
+    for company_id in companies:
+        try:
+            invoice = generate_monthly_bill(company_id, month, year)
+            invoices.append(invoice)
+        except Exception as e:
+            print(f"Failed to generate invoice for {company_id}: {e}")
+
+    return invoices
+
+
 
 
 
 def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, year: int | None = None):
-    """Generate structured monthly bill for a company."""
+    """
+    Generate structured monthly bill for a company. 
+    Handles fallbacks to the last completed month and checks for future dates.
+    """
 
-    now = datetime.now(timezone.utc)
+    # --- 1. Determine Target Month (with Fallback) ---
+    target_month = month
+    target_year = year
 
-    # Fallback → last completed month
-    if month is None or year is None:
-        last_month_date = (now.replace(day=1) - timedelta(days=1))
-        month = month or last_month_date.month
-        year = year or last_month_date.year
+    if target_month is None or target_year is None:
+        # Fallback to the last completed month
+        last_month_date = (NOW.replace(day=1) - timedelta(days=1))
+        target_month = target_month or last_month_date.month
+        target_year = target_year or last_month_date.year
 
-    # Billing cycle start & end
-    start_date = datetime(year, month, 1, tzinfo=timezone.utc)
-    if month == 12:
-        end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc) - timedelta(seconds=1)
-    else:
-        end_date = datetime(year, month + 1, 1, tzinfo=timezone.utc) - timedelta(seconds=1)
+    month, year = target_month, target_year
 
+    # --- 2. Future Date Check ---
+    # Cannot generate a bill for the current month or any month in the future.
+    # This prevents billing for uncompleted periods (e.g., trying to bill Oct on Oct 3rd).
+    
+    current_month_start = NOW.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    requested_month_start = datetime(year, month, 1, tzinfo=timezone.utc)
+    
+    if requested_month_start >= current_month_start:
+         raise ValueError(
+             f"Cannot generate bill for the current month ({NOW.month}/{NOW.year}) "
+             "or a future period. The requested period must be fully completed."
+         )
 
-    # billing_service.py
+    # --- 3. Billing cycle start & end calculation (Robustly handles month lengths and year changes) ---
+    start_date = requested_month_start
+    
+    next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+    
+    end_date = datetime(next_year, next_month, 1, tzinfo=timezone.utc) - timedelta(seconds=1)
+
     start_date_str = start_date.isoformat()
     end_date_str = end_date.isoformat()
 
@@ -46,6 +94,7 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
     billing = billing_details.get("billing", {})
     billingInfo = billing_details.get("billingInfo", {})
 
+    # Shorthand usage
     ratePerMin = billing_details.get("ratePerMinute") or 0
     gstRate = billing_details.get("gstRate") or 0
     maintenanceFee = billing_details.get("maintenanceFee") or 0
@@ -70,11 +119,7 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
     totalAmount = subtotal + gstAmount
 
     # --- Company Info (use active address only) ---
-    active_address = None
-    for addr in billingInfo.get("billingAddresses", []):
-        if addr.get("isActive"):
-            active_address = addr
-            break
+    active_address = next((addr for addr in billingInfo.get("billingAddresses", []) if addr.get("isActive")), None)
 
     company_info = {
         "legalName": billingInfo.get("legalName"),
@@ -86,8 +131,8 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
     }
 
     # --- Invoice metadata ---
-    invoice_date = now
-    due_date = now + timedelta(days=7)
+    invoice_date = NOW # Use the current time for the invoice generation date
+    due_date = invoice_date + timedelta(days=7)
 
     invoice_data = {
         "usageData": {

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query
-from services.billing_service import generate_monthly_bill
+from services.billing_service import generate_monthly_bill, generate_monthly_invoices_for_all
 from reqResVal_models.billing_models import InvoiceModel
 
 router = APIRouter()
@@ -15,3 +15,11 @@ def generate_bill(
         return result
     except ValueError as e:
         return {"error": str(e)}
+
+
+#for testing purpose
+@router.post("/generate-all")
+def generate_all_invoices():
+    invoices = generate_monthly_invoices_for_all()
+    return {"status": "completed", "generated": len(invoices), "invoices": invoices}
+
