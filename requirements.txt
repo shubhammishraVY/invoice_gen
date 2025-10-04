@@ -1,15 +1,14 @@
 pydantic
 Jinja2
 weasyprint
-smtplib
 firebase-admin
 google-cloud-firestore
 
-NOTE on weasyprint dependency:
-weasyprint requires the GTK+ runtime environment for rendering.
-This is because it uses Cairo and Pango libraries which are often
-accessed via the GTK+ stack on various operating systems.
-For Windows, the required runtime can be obtained here:
-https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases
+# NOTE on weasyprint dependency:
+# weasyprint requires the GTK+ runtime environment for rendering.
+# This is because it uses Cairo and Pango libraries which are often
+# accessed via the GTK+ stack on various operating systems.
+# For Windows, the required runtime can be obtained here:
+# https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases
 
-Flow: run billing_cli.py -> uses invoice_service.py ( which is turn uses billing_service.py, pdf_service.py, and mailer_service.py in the same order ) 
+# Flow: run billing_cli.py -> uses invoice_service.py ( which is turn uses billing_service.py, pdf_service.py, and mailer_service.py in the same order ) 
