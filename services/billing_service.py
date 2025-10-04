@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
-from repositories.calls_repo import get_calls_from_top_level, get_calls_from_company_doc
+from repositories.callLogs_repo import get_calls_from_top_level, get_calls_from_company_doc
 from repositories.companies_repo import get_company_billing_details
-from repositories.invoice_repo import save_invoice,get_invoice
+from repositories.bill_repo import save_invoice,get_invoice
 import math
 from repositories.companies_repo import get_all_companies
 
@@ -9,31 +9,25 @@ from repositories.companies_repo import get_all_companies
 NOW = datetime.now(timezone.utc)
 
 
+# def generate_monthly_bill_for_all():
+#     """Generate invoices for all companies for the previous month."""
+#     now = datetime.now(timezone.utc)
+#     last_month_date = (now.replace(day=1) - timedelta(days=1))
 
+#     month = last_month_date.month
+#     year = last_month_date.year
 
+#     companies = get_all_companies()
+#     invoices = []
 
-def generate_monthly_invoices_for_all():
-    """Generate invoices for all companies for the previous month."""
-    now = datetime.now(timezone.utc)
-    last_month_date = (now.replace(day=1) - timedelta(days=1))
+#     for company_id in companies:
+#         try:
+#             invoice = generate_monthly_bill(company_id, month, year)
+#             invoices.append(invoice)
+#         except Exception as e:
+#             print(f"Failed to generate invoice for {company_id}: {e}")
 
-    month = last_month_date.month
-    year = last_month_date.year
-
-    companies = get_all_companies()
-    invoices = []
-
-    for company_id in companies:
-        try:
-            invoice = generate_monthly_bill(company_id, month, year)
-            invoices.append(invoice)
-        except Exception as e:
-            print(f"Failed to generate invoice for {company_id}: {e}")
-
-    return invoices
-
-
-
+#     return invoices
 
 
 def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, year: int | None = None):
@@ -56,16 +50,15 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
 
     # --- 2. Future Date Check ---
     # Cannot generate a bill for the current month or any month in the future.
-    # This prevents billing for uncompleted periods (e.g., trying to bill Oct on Oct 3rd).
     
     current_month_start = NOW.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     requested_month_start = datetime(year, month, 1, tzinfo=timezone.utc)
     
     if requested_month_start >= current_month_start:
-         raise ValueError(
+        raise ValueError(
              f"Cannot generate bill for the current month ({NOW.month}/{NOW.year}) "
              "or a future period. The requested period must be fully completed."
-         )
+           )
 
     # --- 3. Billing cycle start & end calculation (Robustly handles month lengths and year changes) ---
     start_date = requested_month_start
@@ -81,6 +74,8 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
     existing_invoice = get_invoice(company, start_date_str, end_date_str)
     if existing_invoice:
         print("Returning existing invoice:", existing_invoice["id"])
+        # FIX: Ensure existing invoice also has the invoice_number field for pdf_service
+        existing_invoice["invoice_number"] = existing_invoice["id"] 
         return existing_invoice
     
     
@@ -159,5 +154,8 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
     saved_invoice = save_invoice(company, invoice_data)
 
     print("the saved invoice details are: ",saved_invoice.get("id"))
+    
+    # CRITICAL: Add the unique doc ID to the data, which pdf_service uses for file naming.
+    invoice_data["invoice_number"] = saved_invoice.get("id")
 
     return invoice_data
