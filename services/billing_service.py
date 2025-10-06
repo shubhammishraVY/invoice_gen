@@ -226,20 +226,20 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
     calls_top = get_calls_from_top_level(company, start_date, end_date)
     calls_nested = get_calls_from_company_doc(company, start_date, end_date)
 
-    total_duration_top = sum(c.get("duration", 0) for c in calls_top)
-    total_duration_nested = sum(c.get("duration", 0) for c in calls_nested)
+    total_duration_mins_top = sum(math.ceil(c.get("duration", 0) / 60) for c in calls_top)
+    total_duration_mins_nested = sum(math.ceil(c.get("duration", 0) / 60) for c in calls_nested)
 
     total_calls_top = len(calls_top)
     total_calls_nested = len(calls_nested)
 
-    total_seconds = total_duration_top + total_duration_nested
-    total_minutes = math.ceil(total_seconds / 60)
+    total_minutes = total_duration_mins_top + total_duration_mins_nested
 
     # --- Billing calculation ---
     rawAmt = total_minutes * ratePerMin
     subtotal = rawAmt + maintenanceFee
     gstAmount = subtotal * (gstRate / 100)
-    totalAmount = subtotal + gstAmount
+    final_total = subtotal + gstAmount
+
 
     # --- Build line items array for detailed invoice breakdown ---
     line_items = [
@@ -260,8 +260,6 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
             "amount": maintenanceFee
         })
 
-    # --- Calculate final total ---
-    final_total = subtotal + gstAmount
 
     # --- Company Info (use active address only) ---
     active_address = next((addr for addr in billingInfo.get("billingAddresses", []) if addr.get("isActive")), None)
@@ -269,20 +267,12 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
     company_info = {
         "legalName": billingInfo.get("legalName"),
         "billingEmail": billingInfo.get("billingEmail"),
-        "bankName": billingInfo.get("bankName"),
-        "accountNumber": billingInfo.get("accountNumber"),
-        "ifscCode": billingInfo.get("ifscCode"),
         "billingAddress": active_address,  # only active one
     }
 
     # --- Invoice metadata ---
     invoice_date = NOW # Use the current time for the invoice generation date
     due_date = invoice_date + timedelta(days=7)
-
-    # --- Extract additional billing fields ---
-    currency = billing.get("currency", "INR")
-    purchase_order = billing.get("purchaseOrder", "N/A")
-    po_date = billing.get("poDate")
     
     # --- Calculate place of supply and total in words ---
     place_of_supply = determine_place_of_supply(active_address)
@@ -293,17 +283,13 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
             "billingPolicy": billing.get("billingPolicy"),
             "totalBilledMinutes": total_minutes,
             "totalCalls": total_calls_top + total_calls_nested,
-            "totalSeconds": total_seconds,
         },
         "lineItems": line_items,
         "subtotal": round(subtotal, 2),
         "gstAmount": round(gstAmount, 2),
         "totalAmount": round(final_total, 2),
         "totalInWords": total_in_words,
-        # "currency": currency,
         "placeOfSupply": place_of_supply,
-        # "purchaseOrder": purchase_order,
-        # "poDate": po_date.isoformat() if po_date else None,
         "invoiceDate": invoice_date.isoformat(),
         "dueDate": due_date.isoformat(),
         "companyInfo": company_info,

@@ -4,14 +4,17 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email import encoders
+from dotenv import load_dotenv
 
-from string import Template  # for filling placeholders safely
+# from string import Template 
+
+load_dotenv()
 
 # --- Configuration ---
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
-SENDER_EMAIL = "shubham.mishra@vysedeck.com"
-SENDER_PASSWORD = "evzp clsy edcu tsfa"
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = int(os.getenv("SMTP_PORT"))
+SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
 TEMPLATE_PATH = "templates/invoice_email_template.html"
 # ----------------------
 

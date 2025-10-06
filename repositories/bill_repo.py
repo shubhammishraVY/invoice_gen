@@ -26,14 +26,10 @@ def save_invoice(company_id: str, invoice_data: dict):
     Save invoice data under companies/{company_id}/invoiceTest.
     Validates data using Pydantic and generates a deterministic ID.
     """
-    # 1. Pydantic Data Validation
     try:
-        # Validate data against the Pydantic model
         validated_invoice = InvoiceModel(**invoice_data)
-        # Use the dictionary representation of the validated model for saving
         invoice_data = validated_invoice.model_dump()
     except ValidationError as e:
-        # Fail early if validation check fails
         raise ValueError(f"Invoice data validation failed for company {company_id}: {e}")
 
     invoices_ref = (

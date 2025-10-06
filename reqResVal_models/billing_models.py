@@ -20,7 +20,6 @@ class InvoiceModel(BaseModel):
     lineItems: List[LineItem]   # NEW: Itemized breakdown of charges
     subtotal: float
     gstAmount: float
-
     totalAmount: float
     totalInWords: str  # NEW: Amount in words (Indian format)
     # currency: str  # NEW: Currency code (INR, USD, etc.)

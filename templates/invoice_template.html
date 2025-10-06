@@ -306,8 +306,8 @@
         <strong>Total Calls:</strong> {{ usageData.totalCalls | default(0) }}
       </p>
       <p>
-        <strong>Total Duration:</strong> {{ (usageData.totalSeconds / 60) |
-        round | int }} minutes
+        <strong>Total Duration:</strong> {{ usageData.totalBilledMinutes |
+        default(0) }} minutes
       </p>
       <p>
         <strong>Billed Minutes:</strong> {{ usageData.totalBilledMinutes |
@@ -386,14 +386,13 @@
       <div class="footer-right">
         <p class="footer-title">Bank Details:</p>
         <p>
-          <strong>Bank:</strong> {{ companyInfo.bankName | default("N/A") }}
+          <strong>Bank:</strong> {{ "N/A" }}
         </p>
         <p>
-          <strong>Account No:</strong> {{ companyInfo.accountNumber |
-          default("N/A") }}
+          <strong>Account No:</strong> {{ "N/A" }}
         </p>
         <p>
-          <strong>IFSC:</strong> {{ companyInfo.ifscCode | default("N/A") }}
+          <strong>IFSC:</strong> {{ "N/A" }}
         </p>
       </div>
     </div>
