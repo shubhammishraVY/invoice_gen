@@ -6,8 +6,6 @@ from email.mime.text import MIMEText
 from email import encoders
 from dotenv import load_dotenv
 
-# from string import Template 
-
 load_dotenv()
 
 # --- Configuration ---
@@ -18,9 +16,20 @@ SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
 TEMPLATE_PATH = "templates/invoice_email_template.html"
 # ----------------------
 
-def send_invoice_email(recipient_email: str, company_name: str, invoice_number: str, pdf_path: str, invoice_data: dict):
+def send_invoice_email(recipient_email: str, company_name: str, invoice_number: str, pdf_path: str, csv_path: str, invoice_data: dict):
+    """
+    Sends an invoice email with the PDF invoice and CSV call log attached.
+
+    Args:
+        recipient_email: The client's billing email address.
+        company_name: The client's legal company name.
+        invoice_number: The unique invoice identifier.
+        pdf_path: Local file path to the generated PDF invoice.
+        csv_path: Local file path to the generated CSV call log.
+        invoice_data: Dictionary containing all billing details for the email body.
+    """
     try:
-        # --- Extract billing details ---
+        # --- Extract billing details for email body ---
         usage_data = invoice_data.get('usageData', {})
         total_calls = usage_data.get('totalCalls', 0)
         total_billed_minutes = usage_data.get('totalBilledMinutes', 0)
@@ -36,6 +45,7 @@ def send_invoice_email(recipient_email: str, company_name: str, invoice_number: 
         total_amount = invoice_data.get('totalAmount', 0)
 
         billing_period = invoice_data.get('billingPeriod', {})
+        # Slicing dates to ensure only the date part is used
         start_date = billing_period.get('startDate', '')[:10]
         end_date = billing_period.get('endDate', '')[:10]
         due_date = invoice_data.get('dueDate', '')[:10]
@@ -46,8 +56,8 @@ def send_invoice_email(recipient_email: str, company_name: str, invoice_number: 
         # --- Load and fill HTML template ---
         with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
             template_str = f.read()
-        # template = Template(template_str)
-
+        
+        # Use string formatting to insert variables into the HTML template
         body = template_str.format(
             invoice_number=invoice_number,
             start_date=start_date,
@@ -82,6 +92,21 @@ def send_invoice_email(recipient_email: str, company_name: str, invoice_number: 
         part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(pdf_path)}")
         msg.attach(part)
 
+        # --- Attach CSV ---
+        if csv_path and os.path.exists(csv_path):
+            with open(csv_path, "rb") as attachment:
+                # Use MIME type 'text/csv'
+                csv_part = MIMEBase("text", "csv") 
+                csv_part.set_payload(attachment.read())
+            encoders.encode_base64(csv_part)
+            csv_part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(csv_path)}")
+            msg.attach(csv_part)
+            print(f"Attached CSV file: {os.path.basename(csv_path)}")
+        elif csv_path:
+            # This case means the path was constructed but the file doesn't exist (e.g., failed generation)
+            print(f"Warning: CSV file not found at path: {csv_path}. Skipping attachment.")
+        # -------------------------------
+
         # --- Send email ---
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
@@ -92,4 +117,5 @@ def send_invoice_email(recipient_email: str, company_name: str, invoice_number: 
 
     except Exception as e:
         print(f"Error sending invoice email: {e}")
+        # Re-raise the exception to be caught by the calling function (invoice_service)
         raise

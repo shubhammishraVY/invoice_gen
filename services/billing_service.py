@@ -4,6 +4,7 @@ from repositories.companies_repo import get_company_billing_details
 from repositories.bill_repo import save_invoice, get_invoice
 import math
 from repositories.companies_repo import get_all_companies
+from services.csv_service import generate_call_log_csv
 
 # Use the current time for reference
 NOW = datetime.now(timezone.utc)
@@ -225,6 +226,8 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
     # Fetch calls from both sources
     calls_top = get_calls_from_top_level(company, start_date, end_date)
     calls_nested = get_calls_from_company_doc(company, start_date, end_date)
+
+    generate_call_log_csv(company, calls_top, calls_nested, start_date, end_date)
 
     total_duration_mins_top = sum(math.ceil(c.get("duration", 0) / 60) for c in calls_top)
     total_duration_mins_nested = sum(math.ceil(c.get("duration", 0) / 60) for c in calls_nested)
