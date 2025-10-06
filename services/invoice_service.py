@@ -26,7 +26,8 @@ def generate_invoices_for_all(companies: list[str], month: int, year: int):
                     recipient_email=recipient_email,
                     company_name=company_name,
                     invoice_number=invoice_number,
-                    pdf_path=pdf_path
+                    pdf_path=pdf_path,
+                    invoice_data=invoice_data
                 )
                 print(f"Invoice generated and mailed for {company} (ID: {invoice_number}): {pdf_path}")
             else:

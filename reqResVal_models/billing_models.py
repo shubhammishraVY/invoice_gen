@@ -1,15 +1,36 @@
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
+
+
+class LineItem(BaseModel):
+    description: str
+    quantity: int
+    rate: float
+    amount: float
+
+
+class AuthorizedSignatory(BaseModel):
+    name: str
+    designation: str
+    company: str
 
 
 class InvoiceModel(BaseModel):
     usageData: Dict[str, Any]   # billingPolicy, totalBilledMinutes, totalCalls, totalSeconds
+    lineItems: List[LineItem]   # NEW: Itemized breakdown of charges
     subtotal: float
     gstAmount: float
+    roundOff: float  # NEW: Rounding adjustment amount
     totalAmount: float
+    totalInWords: str  # NEW: Amount in words (Indian format)
+    currency: str  # NEW: Currency code (INR, USD, etc.)
+    placeOfSupply: str  # NEW: GST place of supply
+    purchaseOrder: str  # NEW: PO number from client
+    poDate: Optional[str]  # NEW: PO date
     invoiceDate: str
     dueDate: str
     companyInfo: Dict[str, Any]   # includes legalName, billingEmail, bankName, accountNumber, ifscCode, billingAddress
     companyId: str
     billingRates: Dict[str, Any]  # full billing map
-    billingPeriod: Dict[str, str] # startDate, endDate
+    billingPeriod: Dict[str, str]  # startDate, endDate
+    authorizedSignatory: AuthorizedSignatory  # NEW: Signatory details

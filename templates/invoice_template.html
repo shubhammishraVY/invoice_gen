@@ -7,9 +7,9 @@
   <title>TAX INVOICE | VYSEDECK AI Ventures Pvt Ltd | {{ invoice_number }}</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: 'Helvetica', 'Arial', sans-serif;
       margin: 40px;
-      font-size: 11px;
+      font-size: 10px;
       color: #333;
     }
 
@@ -21,389 +21,336 @@
       --line-color: #ddd;
     }
 
-
-    .flex-container {
-      display: table;
-      width: 100%;
-      margin-bottom: 20px;
-    }
-
-    .flex-column {
-      display: table-cell;
-      vertical-align: top;
-      padding: 0 10px;
-    }
-
-    .w-50 {
-      width: 50%;
-    }
-
-    .w-60 {
-      width: 60%;
-    }
-
-    .w-40 {
-      width: 40%;
-    }
-
-    /* --- Header and Title --- */
-    .header-section {
-      border-bottom: 1px solid var(--line-color);
-      padding-bottom: 10px;
-      margin-bottom: 25px;
-    }
-
-    h1 {
-      color: var(--primary-color);
-      font-size: 26px;
-      font-weight: 900;
-      text-transform: uppercase;
-      margin: 0;
-    }
-
-    .logo-placeholder {
-      width: 150px;
-      height: 40px;
-      background-color: var(--primary-color);
-      color: white;
+    .page-header {
       text-align: center;
-      line-height: 40px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line-color);
+    }
+
+    .page-header h1 {
+      font-size: 20px;
       font-weight: bold;
-      font-size: 14px;
+      margin: 0;
+      text-transform: uppercase;
     }
 
-    .address-title,
-    .details-title,
-    .usage-title {
-      font-size: 14px;
-      font-weight: bold;
-      color: #222;
-      margin-top: 5px;
-      margin-bottom: 5px;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 2px;
-    }
-
-    address {
-      font-style: normal;
-      margin-top: 10px;
-      line-height: 1.5;
-    }
-
-    address strong {
-      font-size: 13px;
-      color: var(--primary-color);
-      display: block;
-      margin-bottom: 2px;
-    }
-
-    address p {
-      margin: 2px 0;
-    }
-
-    /* Revised Address Field Styling for vertical alignment */
-    .address-field {
+    .header-details {
       display: table;
       width: 100%;
-      margin: 2px 0;
+      margin-bottom: 15px;
+      font-size: 10px;
     }
 
-    /* Setting a specific, generous width for the label ensures vertical alignment across columns */
-    .address-label {
+    .header-left, .header-right {
       display: table-cell;
-      font-weight: bold;
-      width: 90px;
-      padding-right: 5px;
+      width: 50%;
+      vertical-align: top;
     }
 
-    .address-value {
-      display: table-cell;
-      text-align: left;
-      width: auto;
-    }
-
-    /* Remove previous horizontal contact styles to revert to vertical alignment */
-    .contact-row-horizontal {
-      display: block;
-      margin-top: 10px;
-    }
-
-    .contact-item {
-      margin-right: 0;
-      white-space: normal;
-    }
-
-    .contact-label {
-      font-weight: bold;
-      margin-right: 5px;
-    }
-
-    .details-box p {
-      margin: 4px 0;
-      display: table;
-      width: 100%;
-    }
-
-    .details-box span {
-      display: table-cell;
-      padding: 0 5px;
-    }
-
-    .details-label {
-      font-weight: bold;
-      text-align: left;
-      width: 110px;
-    }
-
-    .details-value {
+    .header-right {
       text-align: right;
     }
 
-    /* --- Item Table Styling --- */
+    .header-details p {
+      margin: 3px 0;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: bold;
+      margin: 15px 0 8px 0;
+    }
+
+    .two-column {
+      display: table;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+
+    .column {
+      display: table-cell;
+      width: 50%;
+      vertical-align: top;
+      padding-right: 20px;
+    }
+
+    .column:last-child {
+      padding-right: 0;
+      padding-left: 20px;
+    }
+
+    .address-block {
+      line-height: 1.6;
+    }
+
+    .address-block strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 11px;
+    }
+
+    .address-block p {
+      margin: 2px 0;
+    }
+
+    .usage-summary {
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-left: 3px solid var(--primary-color);
+      margin-bottom: 15px;
+    }
+
+    .usage-summary p {
+      margin: 3px 0;
+    }
+
+    /* --- Table Styling --- */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 30px;
-      page-break-inside: auto;
+      margin-top: 15px;
+      font-size: 9px;
     }
 
-    th,
-    td {
-      border: 1px solid var(--line-color);
-      padding: 10px;
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
       text-align: left;
-      border-top: none;
-      border-left: none;
-      border-right: none;
     }
 
     th {
-      background: #f8f8f8;
-      color: #555;
+      background-color: #f0f0f0;
       font-weight: bold;
       text-transform: uppercase;
-      font-size: 10px;
-      border-bottom: 2px solid var(--primary-color);
+      font-size: 9px;
     }
 
-    .item-description {
-      width: 50%;
+    .text-center {
+      text-align: center;
     }
 
-    /* --- Totals Rows --- */
-    .total-row td {
+    .text-right {
       text-align: right;
+    }
+
+    .total-row {
       border: none;
-      padding: 5px 10px;
+      font-weight: bold;
     }
 
-    .total-label {
-      font-weight: normal;
-      width: 70%;
+    .total-row td {
+      border: none;
+      padding: 5px 8px;
     }
 
-    .total-amount {
-      width: 30%;
+    .final-total-row {
+      background-color: #f0f0f0;
+      font-weight: bold;
+      font-size: 11px;
     }
 
-    .total-row-final td {
+    .final-total-row td {
       border-top: 3px double var(--primary-color);
-      font-size: 14px;
-      font-weight: bold;
-      padding: 12px 10px;
-      background: var(--secondary-bg);
     }
 
-    /* --- Footer --- */
-    .bank-info {
+    .total-in-words {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #f9f9f9;
+    }
+
+    .total-in-words strong {
+      display: inline-block;
+      margin-right: 5px;
+    }
+
+    .footer-section {
+      display: table;
+      width: 100%;
+      margin-top: 30px;
+    }
+
+    .footer-left, .footer-right {
+      display: table-cell;
+      width: 50%;
+      vertical-align: top;
+    }
+
+    .footer-left {
+      padding-right: 20px;
+    }
+
+    .footer-right {
+      padding-left: 20px;
+    }
+
+    .footer-title {
+      font-size: 11px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .footer-section p {
+      margin: 3px 0;
+      font-size: 9px;
+    }
+
+    .signature-block {
+      margin-top: 30px;
+    }
+
+    .signature-block p {
+      margin: 3px 0;
+    }
+
+    .page-footer {
+      text-align: center;
       margin-top: 40px;
-      padding-top: 15px;
-    }
-
-    .bank-info p {
-      margin: 5px 0;
-    }
-
-    .small-header {
-      font-size: 14px;
-      margin: 0 0 10px 0;
-      color: var(--primary-color);
-      font-weight: bold;
+      font-size: 9px;
+      color: #777;
     }
   </style>
-
 </head>
 
 <body>
 
-  <!-- 1. Header and Logo/Title -->
+  <!-- Header with TAX INVOICE -->
+  <div class="page-header">
+    <h1>TAX INVOICE</h1>
+  </div>
 
-  <div class="flex-container header-section">
-    <div class="flex-column w-50">
-      <h1 style="color: #222;">Invoice</h1>
+  <!-- Invoice Details and PO Information -->
+  <div class="header-details">
+    <div class="header-left">
+      <p><strong>Invoice No:</strong> {{ invoice_number | default("N/A") }}</p>
+      <p><strong>Invoice Date:</strong> {{ invoiceDate[:10] | default("N/A") }}</p>
+      <p><strong>Due Date:</strong> {{ dueDate[:10] | default("N/A") }}</p>
+      <p><strong>Billing Period:</strong> {{ billingPeriod.startDate[:10] | default("N/A") }} to {{ billingPeriod.endDate[:10] | default("N/A") }}</p>
     </div>
-    <div class="flex-column w-50" style="text-align: right;">
-      <!-- Placeholder for VYSEDECK Logo -->
-      <div class="logo-placeholder" style="margin-left: auto;">VYSEDECK</div>
+    <div class="header-right">
+      <p><strong>Place of Supply:</strong> {{ placeOfSupply | default("N/A") }}</p>
+      <p><strong>Purchase Order:</strong> {{ purchaseOrder | default("N/A") }}</p>
+      <p><strong>PO-Date:</strong> {{ poDate[:10] | default("N/A") }}</p>
     </div>
   </div>
 
-  <!-- 2. Address Row: Bill From and Bill To (in the same row, 50/50 split) -->
-
-  <div class="flex-container">
-    <!-- Bill From (Vendor) -->
-    <div class="flex-column w-50" style="padding-left: 0;">
-      <div class="address-title">From (Vendor)</div>
-      <address>
+  <!-- From and To Section -->
+  <div class="two-column">
+    <div class="column">
+      <p class="section-title">From:</p>
+      <div class="address-block">
         <strong>VYSEDECK AI Ventures Pvt Ltd</strong>
         <p>H1A/20, SECTOR-63, Noida</p>
         <p>Uttar Pradesh, India, 201301</p>
-
-        <!-- ALIGNED VERTICAL FIELDS FOR CONTACT DETAILS -->
-        <div class="address-field">
-          <span class="address-label">GSTIN:</span>
-          <span class="address-value">09AAKCV7915Q1ZA</span>
-        </div>
-        <div class="address-field">
-          <span class="address-label">Phone:</span>
-          <span class="address-value">+91 9999999999</span>
-        </div>
-        <div class="address-field">
-          <span class="address-label">Email:</span>
-          <span class="address-value">invoicing@vysedeck.com</span>
-        </div>
-        <!-- END ALIGNED VERTICAL FIELDS -->
-      </address>
+        <p></p>
+        <p><strong>GSTIN:</strong> 09AAKCV7915Q1ZA</p>
+        <p><strong>Phone:</strong> +91 9999999999</p>
+        <p><strong>Email:</strong> shashank.trivedi@vysedeck.com</p>
+      </div>
     </div>
-
-    <!-- Bill To (Client) -->
-    <div class="flex-column w-50" style="padding-right: 0;">
-      <div class="address-title">Bill To (Client)</div>
-      <address>
-        <strong>{{ companyInfo.legalName | default("Client Name Missing") }}</strong>
+    <div class="column">
+      <p class="section-title">To:</p>
+      <div class="address-block">
+        <strong>{{ companyInfo.legalName | default("Customer Name Not Available") }}</strong>
         <p>{{ companyInfo.billingAddress.address | default("Address Not Available") }}</p>
-
-        <!-- ALIGNED VERTICAL FIELDS FOR CONTACT DETAILS -->
-        <div class="address-field">
-          <span class="address-label">GSTIN:</span>
-          <span class="address-value">{{ companyInfo.billingAddress.gstNumber | default("N/A") }}</span>
-        </div>
-        <div class="address-field">
-          <span class="address-label">Phone:</span>
-          <span class="address-value">{{ companyInfo.phoneNumber | default("N/A") }}</span>
-        </div>
-        <div class="address-field">
-          <span class="address-label">Email:</span>
-          <span class="address-value">{{ companyInfo.billingEmail | default("N/A") }}</span>
-        </div>
-        <!-- END ALIGNED VERTICAL FIELDS -->
-      </address>
-    </div>
-
-  </div>
-
-  <!-- 3. Details Row: Invoice Details and Usage Summary (in the same row, 50/50 split) -->
-
-  <div class="flex-container" style="margin-top: 10px;">
-    <!-- Invoice Details -->
-    <div class="flex-column w-50" style="padding-left: 0;">
-      <div class="details-title">Invoice Details</div>
-      <div class="details-box">
-        <p><span class="details-label">Invoice #</span><span class="details-value">{{ invoice_number | default("N/A")
-            }}</span></p>
-        <p><span class="details-label">Invoice Date</span><span class="details-value">{{ invoiceDate[:10] |
-            default("N/A") }}</span></p>
-        <p><span class="details-label">Due Date</span><span class="details-value">{{ dueDate[:10] | default("N/A")
-            }}</span></p>
-        <p><span class="details-label">Billing Period</span><span class="details-value">{{ billingPeriod.startDate[:10]
-            | default("N/A") }} - {{ billingPeriod.endDate[:10] | default("N/A") }}</span></p>
+        <p></p>
+        <p><strong>GSTIN:</strong> {{ companyInfo.billingAddress.gstNumber | default("N/A") }}</p>
+        <p><strong>Phone:</strong> {{ companyInfo.billingAddress.phoneNumber | default("N/A") }}</p>
+        <p><strong>Email:</strong> {{ companyInfo.billingEmail | default("N/A") }}</p>
       </div>
     </div>
-
-    <!-- Usage Summary -->
-    <div class="flex-column w-50" style="padding-right: 0;">
-      <div class="usage-title">Usage Summary</div>
-      <div class="details-box">
-        <p><span class="details-label">Total Calls</span><span class="details-value">{{ usageData.totalCalls |
-            default(0) }}</span></p>
-        <p><span class="details-label">Billed Minutes</span><span class="details-value">{{ usageData.totalBilledMinutes
-            | default(0) }}</span></p>
-        <p><span class="details-label">Total Duration</span><span class="details-value">{{ (usageData.totalSeconds)
-            | default(0) }} secs</span></p>
-        <p><span class="details-label">Billing Policy</span><span class="details-value">{{ usageData.billingPolicy |
-            default("N/A") }}</span></p>
-      </div>
-    </div>
-
   </div>
 
-  <!-- 4. Itemized Charges Table -->
+  <!-- Usage Summary -->
+  <div class="usage-summary">
+    <p class="section-title" style="margin-top: 0;">Usage Summary:</p>
+    <p><strong>Total Calls:</strong> {{ usageData.totalCalls | default(0) }}</p>
+    <p><strong>Total Duration:</strong> {{ (usageData.totalSeconds / 60) | round | int }} minutes</p>
+    <p><strong>Billed Minutes:</strong> {{ usageData.totalBilledMinutes | default(0) }} ({{ usageData.billingPolicy | default("N/A") }} policy)</p>
+  </div>
 
+  <!-- Line Items Table -->
   <table>
     <thead>
       <tr>
-        <th class="item-description">Item & Description</th>
-        <th style="width: 10%; text-align: center;">Qty</th>
-        <th style="width: 20%; text-align: right;">Rate (Rs.)</th>
-        <th style="width: 20%; text-align: right;">Amount (Rs.)</th>
+        <th style="width: 50%;">Item & Description</th>
+        <th style="width: 15%;" class="text-center">Qty</th>
+        <th style="width: 17.5%;" class="text-right">Rate ({{ currency | default("Rs.") }})</th>
+        <th style="width: 17.5%;" class="text-right">Amount ({{ currency | default("Rs.") }})</th>
       </tr>
     </thead>
     <tbody>
-      <!-- 1. Call Usage Charges -->
+      <!-- Dynamic Line Items -->
+      {% for item in lineItems %}
       <tr>
-        <td>Call Usage ({{ usageData.totalBilledMinutes | default(0) }} billed minutes @ ₹{{ "%.2f" |
-          format(billingRates.ratePerMinute | default(0)) }} per minute)</td>
-        <td style="text-align: center;">{{ usageData.totalBilledMinutes | default(0) }}</td>
-        <td style="text-align: right;">{{ "%.2f" | format(billingRates.ratePerMinute | default(0)) }}</td>
-        <td style="text-align: right;">{{ "%.2f" | format(subtotal - billingRates.maintenanceFee | default(0)) }}</td>
+        <td>{{ item.description }}</td>
+        <td class="text-center">{{ item.quantity }}</td>
+        <td class="text-right">{{ "%.2f" | format(item.rate) }}</td>
+        <td class="text-right">{{ "%.2f" | format(item.amount) }}</td>
       </tr>
-      <!-- 2. Maintenance Fee (Conditionally shown if value is greater than zero) -->
-      {% if billingRates.maintenanceFee and billingRates.maintenanceFee > 0 %}
-      <tr>
-        <td>Monthly Platform Maintenance Fee</td>
-        <td style="text-align: center;"></td>
-        <td style="text-align: right;">{{ "%.2f" | format(billingRates.maintenanceFee) }}</td>
-        <td style="text-align: right;">{{ "%.2f" | format(billingRates.maintenanceFee) }}</td>
+      {% endfor %}
+
+      <!-- Subtotal -->
+      <tr class="total-row">
+        <td colspan="3" class="text-right">Subtotal</td>
+        <td class="text-right">{{ "%.2f" | format(subtotal | default(0)) }}</td>
+      </tr>
+
+      <!-- GST -->
+      <tr class="total-row">
+        <td colspan="3" class="text-right">IGST @ {{ billingRates.gstRate | default(0) }}%</td>
+        <td class="text-right">{{ "%.2f" | format(gstAmount | default(0)) }}</td>
+      </tr>
+
+      <!-- Round Off (Conditional) -->
+      {% if roundOff and roundOff != 0 %}
+      <tr class="total-row">
+        <td colspan="3" class="text-right">Round Off</td>
+        <td class="text-right">{{ "%.2f" | format(roundOff) }}</td>
       </tr>
       {% endif %}
 
-      <!-- 5. Totals Rows -->
-
-      <tr class="total-row">
-        <td colspan="3" class="total-label">Subtotal (Usage + Fee)</td>
-        <td class="total-amount">₹ {{ "%.2f" | format(subtotal | default(0)) }}</td>
-      </tr>
-      <tr class="total-row">
-        <td colspan="3" class="total-label">GST ({{ billingRates.gstRate | default(0) }}%)</td>
-        <td class="total-amount">₹ {{ "%.2f" | format(gstAmount | default(0)) }}</td>
-      </tr>
-      <tr class="total-row-final">
-        <td colspan="3" class="total-label" style="text-transform: uppercase;">Total Amount Due</td>
-        <td class="total-amount">₹ {{ "%.2f" | format(totalAmount | default(0)) }}</td>
+      <!-- Total -->
+      <tr class="final-total-row">
+        <td colspan="3" class="text-right">Total</td>
+        <td class="text-right">{{ "%.2f" | format(totalAmount | default(0)) }}</td>
       </tr>
     </tbody>
   </table>
 
-  <!-- 6. Payment Instructions and Footer -->
+  <!-- Total in Words -->
+  <div class="total-in-words">
+    <p><strong>Total In Words:</strong> {{ totalInWords | default("N/A") }}</p>
+  </div>
 
-  <div class="bank-info">
-    <div class="small-header">Payment Instructions</div>
-    <p>Please remit the total amount by {{ dueDate[:10] | default("N/A") }}</p>
-    <p>to the following bank account:</p>
-
-    <div class="flex-container" style="margin-top: 10px;">
-      <div class="flex-column w-50" style="padding-left: 0;">
-        <p style="font-size: 11px;"><strong>Bank Name:</strong> {{ companyInfo.bankName | default("N/A") }}</p>
-        <p style="font-size: 11px;"><strong>Account Number:</strong> {{ companyInfo.accountNumber | default("N/A")
-          }}
-        </p>
-        <p style="font-size: 11px;"><strong>IFSC Code:</strong> {{ companyInfo.ifscCode | default("N/A") }}</p>
-      </div>
-      <div class="flex-column w-50" style="padding-right: 0; text-align: right;">
-        <p style="font-size: 11px;">Thank you for your business.</p>
-      </div>
+  <!-- Payment Terms and Bank Details -->
+  <div class="footer-section">
+    <div class="footer-left">
+      <p class="footer-title">Payment Terms:</p>
+      <p>Payment due within 7 days of invoice date.</p>
+      <p>Taxes applicable as per law.</p>
+      <p>TDS to be deducted where applicable.</p>
     </div>
+    <div class="footer-right">
+      <p class="footer-title">Bank Details:</p>
+      <p><strong>Bank:</strong> {{ companyInfo.bankName | default("N/A") }}</p>
+      <p><strong>Account No:</strong> {{ companyInfo.accountNumber | default("N/A") }}</p>
+      <p><strong>IFSC:</strong> {{ companyInfo.ifscCode | default("N/A") }}</p>
+    </div>
+  </div>
 
+  <!-- Authorized Signatory -->
+  <div class="signature-block">
+    <p class="footer-title">Authorized Signatory</p>
+    <p>{{ authorizedSignatory.name | default("Shashank Trivedi") }}</p>
+    <p>{{ authorizedSignatory.designation | default("Director") }}</p>
+    <p>{{ authorizedSignatory.company | default("VYSEDECK AI Ventures Pvt Ltd") }}</p>
+  </div>
+
+  <!-- Page Footer -->
+  <div class="page-footer">
+    <p>Vysedeck AI Ventures Pvt Ltd (www.vysedeck.com)</p>
   </div>
 
 </body>
