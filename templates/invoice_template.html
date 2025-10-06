@@ -1,358 +1,417 @@
 <!DOCTYPE html>
 
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      TAX INVOICE | VYSEDECK AI Ventures Pvt Ltd | {{ invoice_number }}
+    </title>
+    <style>
+      body {
+        font-family: "Helvetica", "Arial", sans-serif;
+        margin: 0;
+        padding: 0;
+        font-size: 10px;
+        color: #333;
+      } /* --- Colors --- */
+      :root {
+        --primary-color: #104084;
+        --secondary-bg: #f5f7fa;
+        --accent-color: #2e6bc6;
+        --line-color: #ddd;
+      }
 
-<head>
-  <meta charset="utf-8">
-  <title>TAX INVOICE | VYSEDECK AI Ventures Pvt Ltd | {{ invoice_number }}</title>
-  <style>
-    body {
-      font-family: 'Helvetica', 'Arial', sans-serif;
-      margin: 40px;
-      font-size: 10px;
-      color: #333;
-    }
+      .page-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--line-color);
+      }
 
-    /* --- Colors --- */
-    :root {
-      --primary-color: #104084;
-      --secondary-bg: #f5f7fa;
-      --accent-color: #2e6bc6;
-      --line-color: #ddd;
-    }
+      .page-header h1 {
+        font-size: 20px;
+        font-weight: bold;
+        margin: 0;
+        text-transform: uppercase;
+      }
 
-    .page-header {
-      text-align: center;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid var(--line-color);
-    }
+      .header-details {
+        display: table;
+        width: 100%;
+        margin-bottom: 15px;
+        font-size: 10px;
+      }
 
-    .page-header h1 {
-      font-size: 20px;
-      font-weight: bold;
-      margin: 0;
-      text-transform: uppercase;
-    }
+      .header-left,
+      .header-right {
+        display: table-cell;
+        width: 50%;
+        vertical-align: top;
+      }
 
-    .header-details {
-      display: table;
-      width: 100%;
-      margin-bottom: 15px;
-      font-size: 10px;
-    }
+      .header-right {
+        text-align: right;
+      }
 
-    .header-left, .header-right {
-      display: table-cell;
-      width: 50%;
-      vertical-align: top;
-    }
+      .header-details p {
+        margin: 3px 0;
+      }
 
-    .header-right {
-      text-align: right;
-    }
+      .section-title {
+        font-size: 12px;
+        font-weight: bold;
+        margin: 15px 0 8px 0;
+      }
 
-    .header-details p {
-      margin: 3px 0;
-    }
+      .two-column {
+        display: table;
+        width: 100%;
+        margin-bottom: 15px;
+      }
 
-    .section-title {
-      font-size: 12px;
-      font-weight: bold;
-      margin: 15px 0 8px 0;
-    }
+      .column {
+        display: table-cell;
+        width: 50%;
+        vertical-align: top;
+        padding-right: 20px;
+      }
 
-    .two-column {
-      display: table;
-      width: 100%;
-      margin-bottom: 15px;
-    }
+      .column:last-child {
+        padding-right: 0;
+        padding-left: 20px;
+      }
 
-    .column {
-      display: table-cell;
-      width: 50%;
-      vertical-align: top;
-      padding-right: 20px;
-    }
+      .address-block {
+        line-height: 1.6;
+      }
 
-    .column:last-child {
-      padding-right: 0;
-      padding-left: 20px;
-    }
+      .address-block strong {
+        display: inline;
+        margin-bottom: 0;
+        font-size: 11px;
+      }
 
-    .address-block {
-      line-height: 1.6;
-    }
+      .address-block > strong {
+        display: block;
+        margin-bottom: 5px;
+      }
 
-    .address-block strong {
-      display: block;
-      margin-bottom: 5px;
-      font-size: 11px;
-    }
+      .address-block p {
+        margin: 2px 0;
+      }
 
-    .address-block p {
-      margin: 2px 0;
-    }
+      .usage-summary {
+        background-color: #f9f9f9;
+        padding: 10px;
+        border-left: 3px solid var(--primary-color);
+        margin-bottom: 15px;
+      }
 
-    .usage-summary {
-      background-color: #f9f9f9;
-      padding: 10px;
-      border-left: 3px solid var(--primary-color);
-      margin-bottom: 15px;
-    }
+      .usage-summary p {
+        margin: 3px 0;
+      }
 
-    .usage-summary p {
-      margin: 3px 0;
-    }
+      /* --- Table Styling --- */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 9px;
+      }
 
-    /* --- Table Styling --- */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-      font-size: 9px;
-    }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
 
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
+      th {
+        background-color: #f0f0f0;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 9px;
+      }
 
-    th {
-      background-color: #f0f0f0;
-      font-weight: bold;
-      text-transform: uppercase;
-      font-size: 9px;
-    }
+      .text-center {
+        text-align: center;
+      }
 
-    .text-center {
-      text-align: center;
-    }
+      .text-right {
+        text-align: right;
+      }
 
-    .text-right {
-      text-align: right;
-    }
+      .total-row {
+        border: none;
+        font-weight: bold;
+      }
 
-    .total-row {
-      border: none;
-      font-weight: bold;
-    }
+      .total-row td {
+        border: none;
+        padding: 5px 8px;
+      }
 
-    .total-row td {
-      border: none;
-      padding: 5px 8px;
-    }
+      .final-total-row {
+        background-color: #f0f0f0;
+        font-weight: bold;
+        font-size: 11px;
+      }
 
-    .final-total-row {
-      background-color: #f0f0f0;
-      font-weight: bold;
-      font-size: 11px;
-    }
+      .final-total-row td {
+        border-top: 3px double var(--primary-color);
+      }
 
-    .final-total-row td {
-      border-top: 3px double var(--primary-color);
-    }
+      .total-in-words {
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #f9f9f9;
+      }
 
-    .total-in-words {
-      margin-top: 15px;
-      padding: 10px;
-      background-color: #f9f9f9;
-    }
+      .total-in-words strong {
+        display: inline-block;
+        margin-right: 5px;
+      }
 
-    .total-in-words strong {
-      display: inline-block;
-      margin-right: 5px;
-    }
+      .footer-section {
+        display: table;
+        width: 100%;
+        margin-top: 30px;
+      }
 
-    .footer-section {
-      display: table;
-      width: 100%;
-      margin-top: 30px;
-    }
+      .footer-left,
+      .footer-right {
+        display: table-cell;
+        width: 50%;
+        vertical-align: top;
+      }
 
-    .footer-left, .footer-right {
-      display: table-cell;
-      width: 50%;
-      vertical-align: top;
-    }
+      .footer-left {
+        padding-right: 20px;
+      }
 
-    .footer-left {
-      padding-right: 20px;
-    }
+      .footer-right {
+        padding-left: 20px;
+      }
 
-    .footer-right {
-      padding-left: 20px;
-    }
+      .footer-title {
+        font-size: 11px;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
 
-    .footer-title {
-      font-size: 11px;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
+      .footer-section p {
+        margin: 3px 0;
+        font-size: 9px;
+      }
 
-    .footer-section p {
-      margin: 3px 0;
-      font-size: 9px;
-    }
+      .signature-block {
+        margin-top: 30px;
+      }
 
-    .signature-block {
-      margin-top: 30px;
-    }
+      .signature-block p {
+        margin: 3px 0;
+      }
 
-    .signature-block p {
-      margin: 3px 0;
-    }
+      .page-footer {
+        text-align: center;
+        font-size: 9px;
+        color: #777;
+        position: fixed;
+        bottom: 10px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        z-index: 1000;
+      }
+    </style>
+  </head>
 
-    .page-footer {
-      text-align: center;
-      margin-top: 40px;
-      font-size: 9px;
-      color: #777;
-    }
-  </style>
-</head>
-
-<body>
-
-  <!-- Header with TAX INVOICE -->
-  <div class="page-header">
-    <h1>TAX INVOICE</h1>
-  </div>
-
-  <!-- Invoice Details and PO Information -->
-  <div class="header-details">
-    <div class="header-left">
-      <p><strong>Invoice No:</strong> {{ invoice_number | default("N/A") }}</p>
-      <p><strong>Invoice Date:</strong> {{ invoiceDate[:10] | default("N/A") }}</p>
-      <p><strong>Due Date:</strong> {{ dueDate[:10] | default("N/A") }}</p>
-      <p><strong>Billing Period:</strong> {{ billingPeriod.startDate[:10] | default("N/A") }} to {{ billingPeriod.endDate[:10] | default("N/A") }}</p>
+  <body>
+    <!-- Header with TAX INVOICE -->
+    <div class="page-header">
+      <h1>TAX INVOICE</h1>
     </div>
-    <div class="header-right">
-      <p><strong>Place of Supply:</strong> {{ placeOfSupply | default("N/A") }}</p>
-      <p><strong>Purchase Order:</strong> {{ purchaseOrder | default("N/A") }}</p>
-      <p><strong>PO-Date:</strong> {{ poDate[:10] | default("N/A") }}</p>
-    </div>
-  </div>
 
-  <!-- From and To Section -->
-  <div class="two-column">
-    <div class="column">
-      <p class="section-title">From:</p>
-      <div class="address-block">
-        <strong>VYSEDECK AI Ventures Pvt Ltd</strong>
-        <p>H1A/20, SECTOR-63, Noida</p>
-        <p>Uttar Pradesh, India, 201301</p>
-        <p></p>
-        <p><strong>GSTIN:</strong> 09AAKCV7915Q1ZA</p>
-        <p><strong>Phone:</strong> +91 9999999999</p>
-        <p><strong>Email:</strong> shashank.trivedi@vysedeck.com</p>
+    <!-- Invoice Details and PO Information -->
+    <div class="header-details">
+      <div class="header-left">
+        <p>
+          <strong>Invoice No:</strong> {{ invoice_number | default("N/A") }}
+        </p>
+        <p>
+          <strong>Invoice Date:</strong> {{ invoiceDate[:10] | default("N/A") }}
+        </p>
+        <p><strong>Due Date:</strong> {{ dueDate[:10] | default("N/A") }}</p>
+        <p>
+          <strong>Billing Period:</strong> {{ billingPeriod.startDate[:10] |
+          default("N/A") }} to {{ billingPeriod.endDate[:10] | default("N/A") }}
+        </p>
+      </div>
+      <div class="header-right">
+        <p>
+          <strong>Place Of Supply:</strong> {{ placeOfSupply | default("N/A") }}
+        </p>
+        <p>
+          <strong>Purchase Order:</strong> {{ purchaseOrder | default("N/A") }}
+        </p>
+        <p><strong>PO-Date:</strong> {{ poDate[:10] | default("N/A") }}</p>
       </div>
     </div>
-    <div class="column">
-      <p class="section-title">To:</p>
-      <div class="address-block">
-        <strong>{{ companyInfo.legalName | default("Customer Name Not Available") }}</strong>
-        <p>{{ companyInfo.billingAddress.address | default("Address Not Available") }}</p>
-        <p></p>
-        <p><strong>GSTIN:</strong> {{ companyInfo.billingAddress.gstNumber | default("N/A") }}</p>
-        <p><strong>Phone:</strong> {{ companyInfo.billingAddress.phoneNumber | default("N/A") }}</p>
-        <p><strong>Email:</strong> {{ companyInfo.billingEmail | default("N/A") }}</p>
+
+    <!-- From and To Section -->
+    <div class="two-column">
+      <div class="column">
+        <p class="section-title">From:</p>
+        <div class="address-block">
+          <strong>VYSEDECK AI Ventures Pvt Ltd</strong>
+          <p>H1A/20, SECTOR-63, Noida, Uttar Pradesh, India, 201301</p>
+          <p></p>
+          <p><strong>GSTIN:</strong> 09AAKCV7915Q1ZA</p>
+          <p><strong>Phone:</strong> +91 9999999999</p>
+          <p><strong>Email:</strong> shashank.trivedi@vysedeck.com</p>
+        </div>
+      </div>
+      <div class="column">
+        <p class="section-title">To:</p>
+        <div class="address-block">
+          <strong
+            >{{ companyInfo.legalName | default("Customer Name Not Available")
+            }}</strong
+          >
+          <p>
+            {{ companyInfo.billingAddress.address | default("Address Not
+            Available") }}
+          </p>
+          <p></p>
+          <p>
+            <strong>GSTIN:</strong> {{ companyInfo.billingAddress.gstNumber |
+            default("N/A") }}
+          </p>
+          <p>
+            <strong>Phone:</strong> {{ companyInfo.billingAddress.phoneNumber |
+            default("N/A") }}
+          </p>
+          <p>
+            <strong>Email:</strong> {{ companyInfo.billingEmail | default("N/A")
+            }}
+          </p>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Usage Summary -->
-  <div class="usage-summary">
-    <p class="section-title" style="margin-top: 0;">Usage Summary:</p>
-    <p><strong>Total Calls:</strong> {{ usageData.totalCalls | default(0) }}</p>
-    <p><strong>Total Duration:</strong> {{ (usageData.totalSeconds / 60) | round | int }} minutes</p>
-    <p><strong>Billed Minutes:</strong> {{ usageData.totalBilledMinutes | default(0) }} ({{ usageData.billingPolicy | default("N/A") }} policy)</p>
-  </div>
-
-  <!-- Line Items Table -->
-  <table>
-    <thead>
-      <tr>
-        <th style="width: 50%;">Item & Description</th>
-        <th style="width: 15%;" class="text-center">Qty</th>
-        <th style="width: 17.5%;" class="text-right">Rate ({{ currency | default("Rs.") }})</th>
-        <th style="width: 17.5%;" class="text-right">Amount ({{ currency | default("Rs.") }})</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Dynamic Line Items -->
-      {% for item in lineItems %}
-      <tr>
-        <td>{{ item.description }}</td>
-        <td class="text-center">{{ item.quantity }}</td>
-        <td class="text-right">{{ "%.2f" | format(item.rate) }}</td>
-        <td class="text-right">{{ "%.2f" | format(item.amount) }}</td>
-      </tr>
-      {% endfor %}
-
-      <!-- Subtotal -->
-      <tr class="total-row">
-        <td colspan="3" class="text-right">Subtotal</td>
-        <td class="text-right">{{ "%.2f" | format(subtotal | default(0)) }}</td>
-      </tr>
-
-      <!-- GST -->
-      <tr class="total-row">
-        <td colspan="3" class="text-right">IGST @ {{ billingRates.gstRate | default(0) }}%</td>
-        <td class="text-right">{{ "%.2f" | format(gstAmount | default(0)) }}</td>
-      </tr>
-
-      <!-- Round Off (Conditional) -->
-      {% if roundOff and roundOff != 0 %}
-      <tr class="total-row">
-        <td colspan="3" class="text-right">Round Off</td>
-        <td class="text-right">{{ "%.2f" | format(roundOff) }}</td>
-      </tr>
-      {% endif %}
-
-      <!-- Total -->
-      <tr class="final-total-row">
-        <td colspan="3" class="text-right">Total</td>
-        <td class="text-right">{{ "%.2f" | format(totalAmount | default(0)) }}</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- Total in Words -->
-  <div class="total-in-words">
-    <p><strong>Total In Words:</strong> {{ totalInWords | default("N/A") }}</p>
-  </div>
-
-  <!-- Payment Terms and Bank Details -->
-  <div class="footer-section">
-    <div class="footer-left">
-      <p class="footer-title">Payment Terms:</p>
-      <p>Payment due within 7 days of invoice date.</p>
-      <p>Taxes applicable as per law.</p>
-      <p>TDS to be deducted where applicable.</p>
+    <!-- Usage Summary -->
+    <div class="usage-summary">
+      <p class="section-title" style="margin-top: 0">Usage Summary:</p>
+      <p>
+        <strong>Total Calls:</strong> {{ usageData.totalCalls | default(0) }}
+      </p>
+      <p>
+        <strong>Total Duration:</strong> {{ (usageData.totalSeconds / 60) |
+        round | int }} minutes
+      </p>
+      <p>
+        <strong>Billed Minutes:</strong> {{ usageData.totalBilledMinutes |
+        default(0) }} ({{ usageData.billingPolicy | default("N/A") }} policy)
+      </p>
     </div>
-    <div class="footer-right">
-      <p class="footer-title">Bank Details:</p>
-      <p><strong>Bank:</strong> {{ companyInfo.bankName | default("N/A") }}</p>
-      <p><strong>Account No:</strong> {{ companyInfo.accountNumber | default("N/A") }}</p>
-      <p><strong>IFSC:</strong> {{ companyInfo.ifscCode | default("N/A") }}</p>
+
+    <!-- Line Items Table -->
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 50%">Item & Description</th>
+          <th style="width: 15%" class="text-center">Qty</th>
+          <th style="width: 17.5%" class="text-right">
+            Rate ({{ currency | default("Rs.") }})
+          </th>
+          <th style="width: 17.5%" class="text-right">
+            Amount ({{ currency | default("Rs.") }})
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Dynamic Line Items -->
+        {% for item in lineItems %}
+        <tr>
+          <td>{{ item.description }}</td>
+          <td class="text-center">{{ item.quantity }}</td>
+          <td class="text-right">{{ "%.2f" | format(item.rate) }}</td>
+          <td class="text-right">{{ "%.2f" | format(item.amount) }}</td>
+        </tr>
+        {% endfor %}
+
+        <!-- Subtotal -->
+        <tr class="total-row">
+          <td colspan="3" class="text-right">Subtotal</td>
+          <td class="text-right">
+            {{ "%.2f" | format(subtotal | default(0)) }}
+          </td>
+        </tr>
+
+        <!-- GST -->
+        <tr class="total-row">
+          <td colspan="3" class="text-right">
+            IGST @ {{ billingRates.gstRate | default(0) }}%
+          </td>
+          <td class="text-right">
+            {{ "%.2f" | format(gstAmount | default(0)) }}
+          </td>
+        </tr>
+
+        <!-- Total -->
+        <tr class="final-total-row">
+          <td colspan="3" class="text-right">Total</td>
+          <td class="text-right">
+            {{ "%.2f" | format(totalAmount | default(0)) }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Total in Words -->
+    <div class="total-in-words">
+      <p>
+        <strong>Total In Words:</strong> {{ totalInWords | default("N/A") }}
+      </p>
     </div>
-  </div>
 
-  <!-- Authorized Signatory -->
-  <div class="signature-block">
-    <p class="footer-title">Authorized Signatory</p>
-    <p>{{ authorizedSignatory.name | default("Shashank Trivedi") }}</p>
-    <p>{{ authorizedSignatory.designation | default("Director") }}</p>
-    <p>{{ authorizedSignatory.company | default("VYSEDECK AI Ventures Pvt Ltd") }}</p>
-  </div>
+    <!-- Payment Terms and Bank Details -->
+    <div class="footer-section">
+      <div class="footer-left">
+        <p class="footer-title">Payment Terms:</p>
+        <p>Payment due within 7 days of invoice date.</p>
+        <p>Taxes applicable as per law.</p>
+        <p>TDS to be deducted where applicable.</p>
+      </div>
+      <div class="footer-right">
+        <p class="footer-title">Bank Details:</p>
+        <p>
+          <strong>Bank:</strong> {{ companyInfo.bankName | default("N/A") }}
+        </p>
+        <p>
+          <strong>Account No:</strong> {{ companyInfo.accountNumber |
+          default("N/A") }}
+        </p>
+        <p>
+          <strong>IFSC:</strong> {{ companyInfo.ifscCode | default("N/A") }}
+        </p>
+      </div>
+    </div>
 
-  <!-- Page Footer -->
-  <div class="page-footer">
-    <p>Vysedeck AI Ventures Pvt Ltd (www.vysedeck.com)</p>
-  </div>
+    <!-- Authorized Signatory -->
+    <div class="signature-block">
+      <p class="footer-title">Authorized Signatory</p>
+      <p>{{ authorizedSignatory.name | default("Shashank Trivedi") }}</p>
+      <p>{{ authorizedSignatory.designation | default("Director") }}</p>
+      <p>
+        {{ authorizedSignatory.company | default("VYSEDECK AI Ventures Pvt Ltd")
+        }}
+      </p>
+    </div>
 
-</body>
-
+    <!-- Page Footer -->
+    <div class="page-footer">
+      <p>Vysedeck AI Ventures Pvt Ltd (www.vysedeck.com)</p>
+    </div>
+  </body>
 </html>

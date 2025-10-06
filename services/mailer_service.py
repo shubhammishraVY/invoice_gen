@@ -12,7 +12,7 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SENDER_EMAIL = "shubham.mishra@vysedeck.com"
 SENDER_PASSWORD = "evzp clsy edcu tsfa"
-TEMPLATE_PATH = "app/templates/invoice_email_template.html"
+TEMPLATE_PATH = "templates/invoice_email_template.html"
 # ----------------------
 
 def send_invoice_email(recipient_email: str, company_name: str, invoice_number: str, pdf_path: str, invoice_data: dict):

@@ -247,11 +247,8 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
             "amount": maintenanceFee
         })
 
-    # --- Apply rounding to nearest integer ---
-    initial_total = subtotal + gstAmount
-    final_total = round(initial_total)
-    round_off = final_total - initial_total
-    apply_rounding = abs(round_off) > 0.01
+    # --- Calculate final total ---
+    final_total = subtotal + gstAmount
 
     # --- Company Info (use active address only) ---
     active_address = next((addr for addr in billingInfo.get("billingAddresses", []) if addr.get("isActive")), None)
@@ -288,7 +285,6 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
         "lineItems": line_items,
         "subtotal": round(subtotal, 2),
         "gstAmount": round(gstAmount, 2),
-        "roundOff": round(round_off, 2) if apply_rounding else 0,
         "totalAmount": round(final_total, 2),
         "totalInWords": total_in_words,
         "currency": currency,
