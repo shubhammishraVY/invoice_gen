@@ -1,0 +1,75 @@
+<html>
+  <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <p>Dear Sir/Madam,</p>
+
+    <p>Greetings from <strong>VYSEDECK AI Ventures Pvt Ltd</strong>!</p>
+
+    <p>
+      Please find attached the tax invoice <strong>{invoice_number}</strong> for
+      Voice Agent services consumed during the billing period
+      <strong>{start_date} to {end_date}</strong>.
+    </p>
+
+    <div style="background-color: #f5f7fa; padding: 20px; border-left: 4px solid #104084; margin: 20px 0;">
+      <h3 style="color: #104084; margin-top: 0;">Invoice Summary</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0;"><strong>1. Total Calls:</strong></td>
+          <td style="padding: 8px 0; text-align: right;">{total_calls}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0;"><strong>2. Total Billed Minutes:</strong></td>
+          <td style="padding: 8px 0; text-align: right;">{total_billed_minutes} minutes</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0;"><strong>3. Call Charges (@ {currency_symbol}{rate_per_minute}/min):</strong></td>
+          <td style="padding: 8px 0; text-align: right;">{currency_symbol} {call_charges}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0;"><strong>4. Maintenance Charge:</strong></td>
+          <td style="padding: 8px 0; text-align: right;">{currency_symbol} {maintenance_fee}</td>
+        </tr>
+        <tr style="border-top: 1px solid #ddd;">
+          <td style="padding: 8px 0;"><strong>Subtotal:</strong></td>
+          <td style="padding: 8px 0; text-align: right;">{currency_symbol} {subtotal}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0;"><strong>5. GST ({gst_rate}%):</strong></td>
+          <td style="padding: 8px 0; text-align: right;">{currency_symbol} {gst_amount}</td>
+        </tr>
+        <tr style="border-top: 2px solid #104084; background-color: #e8f0f8;">
+          <td style="padding: 12px 0; font-size: 16px;"><strong>6. Total Payable Amount:</strong></td>
+          <td style="padding: 12px 0; text-align: right; font-size: 16px; color: #104084;"><strong>{currency_symbol} {total_amount}</strong></td>
+        </tr>
+      </table>
+    </div>
+
+    <p><strong>Payment Due Date:</strong> {due_date}</p>
+
+    <p>
+      The attached PDF contains complete invoice details including payment instructions and bank account information. Please refer to the document for full terms and conditions.
+    </p>
+
+    <p>
+      Kindly process the payment by the due date mentioned above. For any queries or clarifications regarding this invoice, please feel free to contact us.
+    </p>
+
+    <br />
+    <p>
+      Thank you for your continued business.
+    </p>
+
+    <p>
+      Best regards,<br />
+      <strong>VYSEDECK Billing Team</strong><br />
+      VYSEDECK AI Ventures Pvt Ltd<br />
+      Email: {sender_email}<br />
+      Phone: +91 9999999999
+    </p>
+
+    <hr style="border: 0; border-top: 1px solid #eee; margin-top: 30px;">
+    <p style="font-size: 11px; color: #777;">
+      <em>This is an automated email. Please do not reply directly to this address. For support, contact us at the details provided above.</em>
+    </p>
+  </body>
+</html>
