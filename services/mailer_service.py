@@ -26,7 +26,7 @@ def send_invoice_email(recipient_email: str, company_name: str, invoice_number: 
         rate_per_minute = billing_rates.get('ratePerMinute', 0)
         maintenance_fee = billing_rates.get('maintenanceFee', 0)
         gst_rate = billing_rates.get('gstRate', 0)
-        currency = invoice_data.get('currency', 'INR')
+        currency = invoice_data.get('billingRates.currency', 'INR')
 
         subtotal = invoice_data.get('subtotal', 0)
         gst_amount = invoice_data.get('gstAmount', 0)
@@ -43,9 +43,9 @@ def send_invoice_email(recipient_email: str, company_name: str, invoice_number: 
         # --- Load and fill HTML template ---
         with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
             template_str = f.read()
-        template = Template(template_str)
+        # template = Template(template_str)
 
-        body = template.substitute(
+        body = template_str.format(
             invoice_number=invoice_number,
             start_date=start_date,
             end_date=end_date,

@@ -252,9 +252,9 @@
           <strong>Place Of Supply:</strong> {{ placeOfSupply | default("N/A") }}
         </p>
         <p>
-          <strong>Purchase Order:</strong> {{ purchaseOrder | default("N/A") }}
+          <strong>Purchase Order:</strong> {{ billingRates.purchaseOrder | default("N/A") }}
         </p>
-        <p><strong>PO-Date:</strong> {{ poDate[:10] | default("N/A") }}</p>
+        <p><strong>PO-Date:</strong> {{ billingRates.poDate[:10] | default("N/A") }}</p>
       </div>
     </div>
 
@@ -322,10 +322,10 @@
           <th style="width: 50%">Item & Description</th>
           <th style="width: 15%" class="text-center">Qty</th>
           <th style="width: 17.5%" class="text-right">
-            Rate ({{ currency | default("Rs.") }})
+            Rate ({{ billingRates.currency | default("Rs.") }})
           </th>
           <th style="width: 17.5%" class="text-right">
-            Amount ({{ currency | default("Rs.") }})
+            Amount ({{ billingRates.currency | default("Rs.") }})
           </th>
         </tr>
       </thead>

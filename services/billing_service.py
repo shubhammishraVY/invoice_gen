@@ -124,6 +124,19 @@ def determine_place_of_supply(address: dict) -> str:
     return state_map.get(state_code, "Uttar Pradesh (09)")
 
 
+def _serialize_dates(obj):
+    """Recursively convert datetime objects to ISO strings."""
+    from datetime import datetime
+    if isinstance(obj, dict):
+        return {k: _serialize_dates(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_serialize_dates(i) for i in obj]
+    elif isinstance(obj, datetime):
+        return obj.isoformat()
+    else:
+        return obj
+
+
 # def generate_monthly_bill_for_all():
 #     """Generate invoices for all companies for the previous month."""
 #     now = datetime.now(timezone.utc)
@@ -287,10 +300,10 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
         "gstAmount": round(gstAmount, 2),
         "totalAmount": round(final_total, 2),
         "totalInWords": total_in_words,
-        "currency": currency,
+        # "currency": currency,
         "placeOfSupply": place_of_supply,
-        "purchaseOrder": purchase_order,
-        "poDate": po_date.isoformat() if po_date else None,
+        # "purchaseOrder": purchase_order,
+        # "poDate": po_date.isoformat() if po_date else None,
         "invoiceDate": invoice_date.isoformat(),
         "dueDate": due_date.isoformat(),
         "companyInfo": company_info,
@@ -306,6 +319,8 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
             "company": "VYSEDECK AI Ventures Pvt Ltd"
         }
     }
+
+    invoice_data = _serialize_dates(invoice_data)
 
     # 🔹 Save invoice in Firestore
     saved_invoice = save_invoice(company, invoice_data)

@@ -23,10 +23,10 @@ class InvoiceModel(BaseModel):
 
     totalAmount: float
     totalInWords: str  # NEW: Amount in words (Indian format)
-    currency: str  # NEW: Currency code (INR, USD, etc.)
+    # currency: str  # NEW: Currency code (INR, USD, etc.)
     placeOfSupply: str  # NEW: GST place of supply
-    purchaseOrder: str  # NEW: PO number from client
-    poDate: Optional[str]  # NEW: PO date
+    # purchaseOrder: str  # NEW: PO number from client
+    # poDate: Optional[str]  # NEW: PO date
     invoiceDate: str
     dueDate: str
     companyInfo: Dict[str, Any]   # includes legalName, billingEmail, bankName, accountNumber, ifscCode, billingAddress
