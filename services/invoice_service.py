@@ -17,6 +17,7 @@ def generate_invoices_for_all(companies: list[str], month: int, year: int):
             # Retrieve necessary client details from the invoice data
             company_info = invoice_data.get('companyInfo', {})
             recipient_email = company_info.get('billingEmail')
+            # recipient_email = "vishruth.ramesh@vysedeck.com"
             company_name = company_info.get('legalName')
             invoice_number = invoice_data.get('invoice_number')
 
