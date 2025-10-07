@@ -1,3 +1,4 @@
+#This file is used by the billing_cli.py script to run
 from services.billing_service import generate_monthly_bill
 from services.pdf_service import generate_invoice_pdf
 from services.mailer_service import send_invoice_email 

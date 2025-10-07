@@ -138,28 +138,8 @@ def _serialize_dates(obj):
         return obj
 
 
-# def generate_monthly_bill_for_all():
-#     """Generate invoices for all companies for the previous month."""
-#     now = datetime.now(timezone.utc)
-#     last_month_date = (now.replace(day=1) - timedelta(days=1))
 
-#     month = last_month_date.month
-#     year = last_month_date.year
-
-#     companies = get_all_companies()
-#     invoices = []
-
-#     for company_id in companies:
-#         try:
-#             invoice = generate_monthly_bill(company_id, month, year)
-#             invoices.append(invoice)
-#         except Exception as e:
-#             print(f"Failed to generate invoice for {company_id}: {e}")
-
-#     return invoices
-
-
-def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, year: int | None = None):
+def generate_monthly_bill(company: str, month: int | None = None, year: int | None = None):
     """
     Generate structured monthly bill for a company. 
     Handles fallbacks to the last completed month and checks for future dates.
