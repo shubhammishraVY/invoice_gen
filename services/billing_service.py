@@ -227,7 +227,6 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
     calls_top = get_calls_from_top_level(company, start_date, end_date)
     calls_nested = get_calls_from_company_doc(company, start_date, end_date)
 
-    generate_call_log_csv(company, calls_top, calls_nested, start_date, end_date)
 
     if billing.get("billingPolicy") == "per-call":
         total_duration_mins_top = sum(math.ceil(c.get("duration", 0) / 60) for c in calls_top)
@@ -240,6 +239,8 @@ def generate_monthly_bill(company: str = "vysedeck", month: int | None = None, y
     total_calls_nested = len(calls_nested)
 
     total_minutes = total_duration_mins_top + total_duration_mins_nested
+
+    generate_call_log_csv(company, calls_top, calls_nested, start_date, end_date, total_minutes, total_calls_top + total_calls_nested)
 
     # --- Billing calculation ---
     rawAmt = total_minutes * ratePerMin
