@@ -1,6 +1,7 @@
 import csv
 from datetime import datetime
 import os
+import math
 from typing import List, Dict, Any
 
 def generate_call_log_csv(
@@ -8,13 +9,15 @@ def generate_call_log_csv(
     calls_top: List[Dict[str, Any]], 
     calls_nested: List[Dict[str, Any]], 
     start_date: datetime, 
-    end_date: datetime
+    end_date: datetime,
+    total_minutes: int, # New parameter: Total billed minutes
+    total_calls: int    # New parameter: Total number of calls
 ) -> str:
     """
-    Generates a CSV file containing combined call logs for a company and saves it locally.
-
-    The columns generated are: id (docId), assistant_phone, call_type, customer_phone, 
-    created_at, duration (in secs), finished_at, receivedAt.
+    Generates a multi-section CSV file containing:
+    1. A header row.
+    2. A summary row of total calls and total billed minutes, including the Assistant Phone Number.
+    3. Detailed call logs with calculated billed minutes (rounded up).
 
     Args:
         company_id: The ID of the company.
@@ -22,6 +25,8 @@ def generate_call_log_csv(
         calls_nested: List of call log dictionaries from the nested collection.
         start_date: Start date of the billing period (used for file naming).
         end_date: End date of the billing period (used for file naming).
+        total_minutes: The total billed minutes for the period.
+        total_calls: The total number of calls for the period.
 
     Returns:
         The file path of the generated CSV file. Returns an empty string on failure.
@@ -32,16 +37,20 @@ def generate_call_log_csv(
 
     all_calls = calls_top + calls_nested
     
-    # Define CSV columns as requested by the user
-    fieldnames = [
+    # Extract the Assistant Phone No. from the first call (assuming it's consistent)
+    # Default to "N/A" if the calls list is empty or the field is missing
+    assistant_phone = all_calls[0].get("assistant_phone", "N/A") if all_calls else "N/A"
+    assistant_phone = f"'{assistant_phone}" if assistant_phone else ""
+
+    # Define the field names for the detailed call log section
+    detail_fieldnames = [
         "id", 
-        "assistant_phone", 
-        "call_type", 
-        "customer_phone", 
-        "created_at", 
-        "duration (in secs)", 
-        "finished_at", 
-        "receivedAt"
+        "Customer_Phone", 
+        "Duration [in secs]", 
+        "In mins [rounded-off]", 
+        "Received_At", 
+        "Finished_At", 
+        "Created_At"
     ]
     
     # Prepare the output directory (invoices/)
@@ -58,30 +67,63 @@ def generate_call_log_csv(
 
     try:
         with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
+            # Use a regular CSV writer for the custom header and summary rows
+            writer = csv.writer(csvfile)
             
+            # 1. Write the Heading Row
+            writer.writerow([f"Call Logs Details for {company_id} from {start_date} to {end_date}"])
+            writer.writerow([]) # Empty row for visual separation
+
+            # 2. Write the Summary Header and Values
+            summary_headers = ["Total_Calls", "Total Billed Minutes", "Assistant_Phone_No"]
+            summary_values = [total_calls, total_minutes, assistant_phone]
+            
+            # Write the summary headers, followed by empty cells to align with detail columns
+            padding_count = len(detail_fieldnames) - len(summary_headers)
+            writer.writerow(summary_headers + [""] * padding_count)
+            writer.writerow(summary_values + [""] * padding_count)
+            writer.writerow([]) # Empty row for visual separation
+            
+            # Now, use DictWriter for the detailed log section
+            detail_writer = csv.DictWriter(csvfile, fieldnames=detail_fieldnames)
+            
+            # 3. Write the detailed log header
+            detail_writer.writeheader()
+            
+            # 4. Write the detailed log rows
             for call in all_calls:
-                # Map Firestore document keys to CSV column headers
+                duration_secs = call.get("duration", 0)
+                
+                # Calculate billed minutes: ceiling of duration / 60
+                # Billed minutes = ceiling(duration / 60)
+                billed_mins = math.ceil(duration_secs / 60)
+                
+                # Prepend phone number with a single quote to prevent Excel scientific notation/truncation
+                customer_phone_str = str(call.get("customer_phone", ""))
+                # Only prepend quote if the number is not empty
+                safe_customer_phone = f"'{customer_phone_str}" if customer_phone_str else "" 
+
                 row = {
-                    # Assuming the document ID is passed as 'id' or 'docId' from the repository
-                    "id": call.get("id") or call.get("docId", ""), 
-                    "assistant_phone": call.get("assistant_phone", ""),
-                    "call_type": call.get("call_type", ""),
-                    "customer_phone": call.get("customer_phone", ""),
-                    "created_at": call.get("created_at", ""),
-                    "duration (in secs)": call.get("duration", 0),
-                    "finished_at": call.get("finished_at", ""),
-                    "receivedAt": call.get("receivedAt", "")
+                    "id": call.get("id"), 
+                    "Customer_Phone": safe_customer_phone,
+                    "Duration [in secs]": duration_secs,
+                    "In mins [rounded-off]": billed_mins,
+                    # Note: Using the raw field names from Firestore keys
+                    "Received_At": call.get("receivedAt", ""),
+                    "Finished_At": call.get("finished_at", ""),
+                    "Created_At": call.get("created_at", ""),
                 }
                 
                 # Convert any remaining datetime objects to ISO strings for consistent CSV output
-                for key in ["created_at", "finished_at", "receivedAt"]:
+                for key in ["Created_At", "Finished_At", "Received_At"]:
                     value = row.get(key)
                     if isinstance(value, datetime):
                         row[key] = value.isoformat()
+                    # Handle possible Firestore Timestamps if they weren't converted earlier
+                    elif hasattr(value, 'to_iso_str'): 
+                        row[key] = value.to_iso_str()
 
-                writer.writerow(row)
+                detail_writer.writerow(row)
         
         print(f"Successfully generated CSV for {company_id}: {filepath}")
         return filepath

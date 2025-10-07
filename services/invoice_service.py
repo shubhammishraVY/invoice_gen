@@ -18,7 +18,7 @@ def _construct_csv_filepath(company_id: str, start_date_str: str, end_date_str: 
 
 
 def generate_invoices_for_all(companies: list[str], month: int, year: int):
-    """Generate invoices for all companies, create PDFs, and email them."""
+    """Generate invoices for all companies, create PDFs, attach CSV and email them."""
     generated_pdfs = []
     for company in companies:
         try:
