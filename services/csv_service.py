@@ -3,6 +3,8 @@ from datetime import datetime
 import os
 import math
 from typing import List, Dict, Any
+from utils.date_utils import _get_date_format_for_tz
+import pendulum # Import pendulum for parsing and formatting
 
 def generate_call_log_csv(
     company_id: str, 
@@ -11,13 +13,15 @@ def generate_call_log_csv(
     start_date: datetime, 
     end_date: datetime,
     total_minutes: int, # New parameter: Total billed minutes
-    total_calls: int    # New parameter: Total number of calls
+    total_calls: int, # New parameter: Total number of calls
+    target_timezone: str # New parameter: Timezone for date formatting
 ) -> str:
     """
     Generates a multi-section CSV file containing:
     1. A header row.
     2. A summary row of total calls and total billed minutes, including the Assistant Phone Number.
-    3. Detailed call logs with calculated billed minutes (rounded up).
+    3. Detailed call logs with calculated billed minutes (rounded up), with dates formatted 
+       according to the target_timezone's regional convention (without applying timezone offset).
 
     Args:
         company_id: The ID of the company.
@@ -27,6 +31,7 @@ def generate_call_log_csv(
         end_date: End date of the billing period (used for file naming).
         total_minutes: The total billed minutes for the period.
         total_calls: The total number of calls for the period.
+        target_timezone: The timezone string (e.g., 'Asia/Kolkata') to determine date format.
 
     Returns:
         The file path of the generated CSV file. Returns an empty string on failure.
@@ -38,9 +43,35 @@ def generate_call_log_csv(
     all_calls = calls_top + calls_nested
     
     # Extract the Assistant Phone No. from the first call (assuming it's consistent)
-    # Default to "N/A" if the calls list is empty or the field is missing
     assistant_phone = all_calls[0].get("assistant_phone", "N/A") if all_calls else "N/A"
     assistant_phone = f"'{assistant_phone}" if assistant_phone else ""
+
+    # --- DATE FORMATTING SETUP ---
+    # Determine the date format string (e.g., '%d-%m-%Y') based on the target timezone
+    # We will append time formatting to this date format.
+    DATE_ONLY_FORMAT = _get_date_format_for_tz(target_timezone)
+    # The CSV needs date and time, so we combine the date format with a standard time format.
+    DATETIME_FORMAT = f"{DATE_ONLY_FORMAT} %H:%M:%S"
+    
+    def format_log_datetime(dt_iso_string: str) -> str:
+        """
+        Formats an ISO date string into the determined regional format (Date and Time),
+        without applying any timezone offset.
+        """
+        if not dt_iso_string:
+            return ""
+        try:
+            # Parse the ISO string, assuming it represents the target date in UTC.
+            # We use 'UTC' as the assumed timezone for the *value* so we don't shift it.
+            dt_obj = pendulum.parse(dt_iso_string, tz='UTC')
+            
+            # Format the original date and time components using the determined regional format.
+            return dt_obj.strftime(DATETIME_FORMAT)
+        except Exception:
+            # Return original string if parsing fails
+            return dt_iso_string
+    # --- END DATE FORMATTING SETUP ---
+
 
     # Define the field names for the detailed call log section
     detail_fieldnames = [
@@ -57,7 +88,7 @@ def generate_call_log_csv(
     output_dir = "invoices"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Create a descriptive filename using the billing period
+    # Create a descriptive filename using the billing period (using YYYY-MM-DD for file name consistency)
     start_str = start_date.strftime("%Y-%m-%d")
     end_str = end_date.strftime("%Y-%m-%d")
     filename = f"{company_id}_call_logs_{start_str}_to_{end_str}.csv"
@@ -67,22 +98,20 @@ def generate_call_log_csv(
 
     try:
         with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
-            # Use a regular CSV writer for the custom header and summary rows
             writer = csv.writer(csvfile)
             
             # 1. Write the Heading Row
-            writer.writerow([f"Call Logs Details for {company_id} from {start_date} to {end_date}"])
-            writer.writerow([]) # Empty row for visual separation
+            writer.writerow([f"Call Logs Details for {company_id} from {start_date.strftime(DATE_ONLY_FORMAT)} to {end_date.strftime(DATE_ONLY_FORMAT)}"])
+            writer.writerow([]) 
 
             # 2. Write the Summary Header and Values
             summary_headers = ["Total_Calls", "Total Billed Minutes", "Assistant_Phone_No"]
             summary_values = [total_calls, total_minutes, assistant_phone]
             
-            # Write the summary headers, followed by empty cells to align with detail columns
             padding_count = len(detail_fieldnames) - len(summary_headers)
             writer.writerow(summary_headers + [""] * padding_count)
             writer.writerow(summary_values + [""] * padding_count)
-            writer.writerow([]) # Empty row for visual separation
+            writer.writerow([]) 
             
             # Now, use DictWriter for the detailed log section
             detail_writer = csv.DictWriter(csvfile, fieldnames=detail_fieldnames)
@@ -95,33 +124,33 @@ def generate_call_log_csv(
                 duration_secs = call.get("duration", 0)
                 
                 # Calculate billed minutes: ceiling of duration / 60
-                # Billed minutes = ceiling(duration / 60)
                 billed_mins = math.ceil(duration_secs / 60)
                 
                 # Prepend phone number with a single quote to prevent Excel scientific notation/truncation
                 customer_phone_str = str(call.get("customer_phone", ""))
-                # Only prepend quote if the number is not empty
                 safe_customer_phone = f"'{customer_phone_str}" if customer_phone_str else "" 
 
+                # Extract raw date values
+                received_at_raw = call.get("receivedAt", call.get("received_at", ""))
+                finished_at_raw = call.get("finished_at", "")
+                created_at_raw = call.get("created_at", "")
+                
+                # Convert any remaining datetime objects to ISO strings first for consistency
+                # and then format the ISO string
+                if isinstance(received_at_raw, datetime): received_at_raw = received_at_raw.isoformat()
+                if isinstance(finished_at_raw, datetime): finished_at_raw = finished_at_raw.isoformat()
+                if isinstance(created_at_raw, datetime): created_at_raw = created_at_raw.isoformat()
+
+                # --- APPLY FORMATTING HERE ---
                 row = {
                     "id": call.get("id"), 
                     "Customer_Phone": safe_customer_phone,
                     "Duration [in secs]": duration_secs,
                     "In mins [rounded-off]": billed_mins,
-                    # Note: Using the raw field names from Firestore keys
-                    "Received_At": call.get("receivedAt", ""),
-                    "Finished_At": call.get("finished_at", ""),
-                    "Created_At": call.get("created_at", ""),
+                    "Received_At": format_log_datetime(received_at_raw),
+                    "Finished_At": format_log_datetime(finished_at_raw),
+                    "Created_At": format_log_datetime(created_at_raw),
                 }
-                
-                # Convert any remaining datetime objects to ISO strings for consistent CSV output
-                for key in ["Created_At", "Finished_At", "Received_At"]:
-                    value = row.get(key)
-                    if isinstance(value, datetime):
-                        row[key] = value.isoformat()
-                    # Handle possible Firestore Timestamps if they weren't converted earlier
-                    elif hasattr(value, 'to_iso_str'): 
-                        row[key] = value.to_iso_str()
 
                 detail_writer.writerow(row)
         

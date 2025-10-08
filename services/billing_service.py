@@ -3,7 +3,6 @@ from repositories.callLogs_repo import get_calls_from_top_level, get_calls_from_
 from repositories.companies_repo import get_company_billing_details
 from repositories.bill_repo import save_invoice, get_invoice
 import math
-from repositories.companies_repo import get_all_companies
 from services.csv_service import generate_call_log_csv
 
 # Use the current time for reference
@@ -221,8 +220,8 @@ def generate_monthly_bill(company: str, month: int | None = None, year: int | No
 
     total_minutes = total_duration_mins_top + total_duration_mins_nested
 
-    generate_call_log_csv(company, calls_top, calls_nested, start_date, end_date, total_minutes, total_calls_top + total_calls_nested)
-
+    generate_call_log_csv(company, calls_top, calls_nested, start_date, end_date, total_minutes, total_calls_top + total_calls_nested, tzone)
+    
     # --- Billing calculation ---
     rawAmt = total_minutes * ratePerMin
     subtotal = rawAmt + maintenanceFee

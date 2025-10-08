@@ -3,6 +3,7 @@ from services.billing_service import generate_monthly_bill
 from services.pdf_service import generate_invoice_pdf
 from services.mailer_service import send_invoice_email 
 from datetime import datetime # Import datetime for path construction
+from utils.date_utils import localize_datetime_fields
 
 def _construct_csv_filepath(company_id: str, start_date_str: str, end_date_str: str) -> str:
     """Helper to construct the expected path of the generated CSV file."""
@@ -27,6 +28,8 @@ def generate_invoices_for_all(companies: list[str], month: int, year: int):
             invoice_data = generate_monthly_bill(company, month, year)
             
             print("Timezone for the company is:", invoice_data.get('tzone'))
+
+            invoice_data = localize_datetime_fields(invoice_data, invoice_data.get('tzone'))
 
             # The invoice_data now contains "invoice_number"
             pdf_path = generate_invoice_pdf(invoice_data)

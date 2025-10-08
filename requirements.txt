@@ -3,7 +3,7 @@ Jinja2
 weasyprint
 firebase-admin
 google-cloud-firestore
-
+pendulum
 # NOTE on weasyprint dependency:
 # weasyprint requires the GTK+ runtime environment for rendering.
 # This is because it uses Cairo and Pango libraries which are often

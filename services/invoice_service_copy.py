@@ -8,6 +8,7 @@ from repositories.companies_repo import get_all_companies
 from services.billing_service import generate_monthly_bill
 from services.pdf_service import generate_invoice_pdf
 from services.mailer_service import send_invoice_email 
+from utils.date_utils import localize_datetime_fields
 
 
 
@@ -72,6 +73,8 @@ def generate_invoice_for_single_company(company_name: str, month: int, year: int
              return None
 
         print("Timezone for the company is:", invoice_data.get('tzone'))
+
+        invoice_data = localize_datetime_fields(invoice_data, invoice_data.get('tzone'))
 
         # The invoice_data should contain "invoice_number"
         pdf_path = generate_invoice_pdf(invoice_data)
