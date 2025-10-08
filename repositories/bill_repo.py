@@ -57,7 +57,7 @@ def save_invoice(company_id: str, invoice_data: dict):
         # This check is now redundant but kept as a safeguard
         raise ValueError("The month and year not parsed correctly")
 
-    doc_id = f"INV_{company_id}_{month}_{year}"
+    doc_id = f"{company_id[:3].upper()}{month}{year}"
     doc_ref = invoices_ref.document(doc_id)
 
     # Add server timestamp

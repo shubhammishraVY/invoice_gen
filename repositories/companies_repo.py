@@ -12,7 +12,8 @@ def get_company_billing_details(company_id: str):
 
     billing = data.get("billing", {})
     billingInfo = data.get("billingInfo",{})
-
+    settings = data.get("settings",{})
+    tzone = settings.get("timezone")
     ratePerMinute = billing.get("ratePerMinute")
     gstRate = billing.get("gstRate")
     maintenanceFee = billing.get("maintenanceFee")
@@ -21,7 +22,8 @@ def get_company_billing_details(company_id: str):
         "gstRate": gstRate, 
         "maintenanceFee": maintenanceFee,
         "billing": billing,
-        "billingInfo": billingInfo
+        "billingInfo": billingInfo,
+        "tzone": tzone,
     }
 
 

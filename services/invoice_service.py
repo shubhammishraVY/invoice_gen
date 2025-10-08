@@ -26,6 +26,8 @@ def generate_invoices_for_all(companies: list[str], month: int, year: int):
             # 1. Generate/Fetch invoice data (including saving to DB)
             invoice_data = generate_monthly_bill(company, month, year)
             
+            print("Timezone for the company is:", invoice_data.get('tzone'))
+
             # The invoice_data now contains "invoice_number"
             pdf_path = generate_invoice_pdf(invoice_data)
             
@@ -53,14 +55,14 @@ def generate_invoices_for_all(companies: list[str], month: int, year: int):
 
             # Ensure we have the critical data before attempting to send the email
             if recipient_email and company_name and invoice_number and csv_path: 
-                send_invoice_email(
-                    recipient_email=recipient_email,
-                    company_name=company_name,
-                    invoice_number=invoice_number,
-                    pdf_path=pdf_path,
-                    csv_path=csv_path, # <-- Pass the constructed CSV path
-                    invoice_data=invoice_data
-                )
+                # send_invoice_email(
+                #     recipient_email=recipient_email,
+                #     company_name=company_name,
+                #     invoice_number=invoice_number,
+                #     pdf_path=pdf_path,
+                #     csv_path=csv_path, # <-- Pass the constructed CSV path
+                #     invoice_data=invoice_data
+                # )
                 print(f"Invoice and Call Log CSV mailed for {company} (ID: {invoice_number}): {pdf_path}")
             else:
                 missing_fields = []

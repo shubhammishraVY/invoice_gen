@@ -202,6 +202,7 @@ def generate_monthly_bill(company: str, month: int | None = None, year: int | No
     ratePerMin = billing_details.get("ratePerMinute") or 0
     gstRate = billing_details.get("gstRate") or 0
     maintenanceFee = billing_details.get("maintenanceFee") or 0
+    tzone = billing_details.get("tzone")
 
     # Fetch calls from both sources
     calls_top = get_calls_from_top_level(company, start_date, end_date)
@@ -303,5 +304,6 @@ def generate_monthly_bill(company: str, month: int | None = None, year: int | No
     
     # CRITICAL: Add the unique doc ID to the data, which pdf_service uses for file naming.
     invoice_data["invoice_number"] = saved_invoice.get("id")
+    invoice_data["tzone"] = tzone
 
     return invoice_data

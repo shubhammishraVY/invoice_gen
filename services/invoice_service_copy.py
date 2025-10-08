@@ -94,14 +94,14 @@ def generate_invoice_for_single_company(company_name: str, month: int, year: int
 
         # Ensure we have the critical data before attempting to send the email
         if recipient_email and company_name_from_data and invoice_number and csv_path: 
-            send_invoice_email(
-                recipient_email=recipient_email,
-                company_name=company_name_from_data,
-                invoice_number=invoice_number,
-                pdf_path=pdf_path,
-                csv_path=csv_path, # <-- Pass the constructed CSV path
-                invoice_data=invoice_data
-            )
+            # send_invoice_email(
+            #     recipient_email=recipient_email,
+            #     company_name=company_name_from_data,
+            #     invoice_number=invoice_number,
+            #     pdf_path=pdf_path,
+            #     csv_path=csv_path, # <-- Pass the constructed CSV path
+            #     invoice_data=invoice_data
+            # )
             print(f"Invoice and Call Log CSV mailed for {company_name} (ID: {invoice_number}): {pdf_path}")
         else:
             missing_fields = []
