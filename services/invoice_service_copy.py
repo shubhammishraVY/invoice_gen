@@ -71,6 +71,8 @@ def generate_invoice_for_single_company(company_name: str, month: int, year: int
              print(f"Billing service returned no data for {company_name} (ID: {company_id}).")
              return None
 
+        print("Timezone for the company is:", invoice_data.get('tzone'))
+
         # The invoice_data should contain "invoice_number"
         pdf_path = generate_invoice_pdf(invoice_data)
         
