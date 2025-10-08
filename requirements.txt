@@ -10,5 +10,11 @@ google-cloud-firestore
 # accessed via the GTK+ stack on various operating systems.
 # For Windows, the required runtime can be obtained here:
 # https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases
+# for linux, the required runtime libraries are (uncomment them to use them directly):
+# libcairo2 
+# libpango-1.0-0 
+# libpangocairo-1.0-0 
+# libgdk-pixbuf-2.0-0 
+# libffi-dev 
 
 # Flow: run billing_cli.py -> uses invoice_service.py ( which is turn uses billing_service.py, pdf_service.py, and mailer_service.py in the same order ) 
