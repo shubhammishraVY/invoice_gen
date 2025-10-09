@@ -8,7 +8,7 @@ def get_invoice(company: str, start_date: str, end_date: str):
     """
     Fetch invoice for a given company and billing period if it exists.
     """
-    invoices_ref = firestore_client.collection("companies").document(company).collection("invoiceTest")
+    invoices_ref = firestore_client.collection("companies").document(company).collection("invoices")
     query = (
         invoices_ref
         .where("billingPeriod.startDate", "==", start_date)
@@ -36,7 +36,7 @@ def save_invoice(company_id: str, invoice_data: dict):
         firestore_client
         .collection("companies")
         .document(company_id)
-        .collection("invoiceTest")
+        .collection("invoices")
     )
 
     # 2. Deterministic ID generation from billing period
