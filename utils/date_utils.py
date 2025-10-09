@@ -35,6 +35,10 @@ FORMAT_STRINGS = {
 def _get_date_format_for_tz(target_tz_str: str) -> str:
     """Determines the appropriate date format string based on the timezone prefix."""
     
+    if target_tz_str is None:
+        target_tz_str = 'UTC'
+        print(f"Warning: Timezone was None. Defaulting to {target_tz_str}")
+
     # Prioritize specific city/region matches
     for style, zones in TIMEZONE_DATE_FORMAT_MAP.items():
         for zone_prefix in zones:
@@ -52,7 +56,10 @@ def localize_datetime_fields(data: Dict[str, Any], target_tz_str: str) -> Dict[s
     DATE format dictated by the target timezone, but without changing the
     day/month/year value due to timezone offsets.
     """
-    
+    if target_tz_str is None:
+        target_tz_str = 'UTC'
+        print(f"Warning: Timezone was None. Defaulting to {target_tz_str}")
+        
     # 1. Prepare the Target Timezone and Date Format
     try:
         # We need this to determine the format, but won't use it for conversion

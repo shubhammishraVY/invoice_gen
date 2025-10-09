@@ -1,18 +1,21 @@
 import os
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
-from email import encoders
+# import smtplib
+# from email.mime.multipart import MIMEMultipart
+# from email.mime.base import MIMEBase
+# from email.mime.text import MIMEText
+# from email import encoders
+from postmarker.core import PostmarkClient
+import base64   
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- Configuration ---
-SMTP_SERVER = os.getenv("SMTP_SERVER")
-SMTP_PORT = int(os.getenv("SMTP_PORT"))
+# # --- Configuration ---
+# SMTP_SERVER = os.getenv("SMTP_SERVER")
+# SMTP_PORT = int(os.getenv("SMTP_PORT"))
+POSTMARK_API_TOKEN = os.getenv("POSTMARK_API_TOKEN")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
+# SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
 TEMPLATE_PATH = "templates/invoice_email_template.html"
 # ----------------------
 
@@ -28,6 +31,9 @@ def send_invoice_email(recipient_email: str, company_name: str, invoice_number: 
         csv_path: Local file path to the generated CSV call log.
         invoice_data: Dictionary containing all billing details for the email body.
     """
+    if not POSTMARK_API_TOKEN:
+        raise ValueError("POSTMARK_API_TOKEN environment variable is not set.")
+    postmark = PostmarkClient(server_token=POSTMARK_API_TOKEN)
     try:
         # --- Extract billing details for email body ---
         usage_data = invoice_data.get('usageData', {})
@@ -76,44 +82,44 @@ def send_invoice_email(recipient_email: str, company_name: str, invoice_number: 
             sender_email=SENDER_EMAIL,
         )
 
-        # --- Construct email message ---
-        msg = MIMEMultipart()
-        msg['From'] = SENDER_EMAIL
-        msg['To'] = recipient_email
-        msg['Subject'] = f"Tax Invoice {invoice_number} - Voice Agent Services for {start_date} to {end_date}"
+        attachments_list = []
 
-        msg.attach(MIMEText(body, 'html'))
+        def encode_attachment(file_path: str, mime_type: str):
+            with open(file_path, "rb") as f:
+                encoded_content = base64.b64encode(f.read()).decode('utf-8')
+            return{
+                "Name": os.path.basename(file_path),
+                "Content": encoded_content,
+                "ContentType": mime_type
+            }
+        
+        # 1. Attach PDF
+        attachments_list.append(encode_attachment(
+            pdf_path,
+            "application/pdf"
+        ))
 
-        # --- Attach PDF ---
-        with open(pdf_path, "rb") as attachment:
-            part = MIMEBase("application", "octet-stream")
-            part.set_payload(attachment.read())
-        encoders.encode_base64(part)
-        part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(pdf_path)}")
-        msg.attach(part)
-
-        # --- Attach CSV ---
+        # 2. Attach CSV
         if csv_path and os.path.exists(csv_path):
-            with open(csv_path, "rb") as attachment:
-                # Use MIME type 'text/csv'
-                csv_part = MIMEBase("text", "csv") 
-                csv_part.set_payload(attachment.read())
-            encoders.encode_base64(csv_part)
-            csv_part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(csv_path)}")
-            msg.attach(csv_part)
-            print(f"Attached CSV file: {os.path.basename(csv_path)}")
+            attachments_list.append(encode_attachment(
+                csv_path,
+                "text/csv"
+            ))
+            print(f"Prepared CSV file for API: {os.path.basename(csv_path)}")
         elif csv_path:
-            # This case means the path was constructed but the file doesn't exist (e.g., failed generation)
             print(f"Warning: CSV file not found at path: {csv_path}. Skipping attachment.")
-        # -------------------------------
 
-        # --- Send email ---
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            server.sendmail(SENDER_EMAIL, recipient_email, msg.as_string())
 
-        print(f"Invoice email sent successfully to {recipient_email}")
+        # --- Send email via Postmark API ---
+        postmark.emails.send(
+            From=SENDER_EMAIL,
+            To=recipient_email,
+            Subject=f"Tax Invoice {invoice_number} - Voice Agent Services for {start_date} to {end_date}",
+            HtmlBody=body,
+            Attachments=attachments_list
+        )
+        
+        print(f"Invoice email sent successfully via Postmark API to {recipient_email}")
 
     except Exception as e:
         print(f"Error sending invoice email: {e}")

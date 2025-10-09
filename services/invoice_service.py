@@ -27,6 +27,11 @@ def generate_invoices_for_all(companies: list[str], month: int, year: int):
             # 1. Generate/Fetch invoice data (including saving to DB)
             invoice_data = generate_monthly_bill(company, month, year)
             
+            # Retrieve billing dates from the raw invoice data ( not the localized one )
+            billing_period = invoice_data.get('billingPeriod', {})
+            start_date = billing_period.get('startDate')
+            end_date = billing_period.get('endDate')
+
             print("Timezone for the company is:", invoice_data.get('tzone'))
 
             invoice_data = localize_datetime_fields(invoice_data, invoice_data.get('tzone'))
@@ -34,17 +39,9 @@ def generate_invoices_for_all(companies: list[str], month: int, year: int):
             # The invoice_data now contains "invoice_number"
             pdf_path = generate_invoice_pdf(invoice_data)
             
-            # --- NEW LOGIC: DETERMINE CSV PATH ---
-            # Retrieve billing dates from the invoice data
-            billing_period = invoice_data.get('billingPeriod', {})
-            start_date = billing_period.get('startDate')
-            end_date = billing_period.get('endDate')
-            
             csv_path = None
             if start_date and end_date:
                 # Construct the path to the expected CSV file in the 'invoices' folder.
-                # Note: The actual CSV file creation logic (generate_call_log_csv) must be 
-                # executed successfully before this step to ensure the file exists.
                 csv_path = _construct_csv_filepath(company, start_date, end_date)
             # --------------------------------------
             
@@ -58,14 +55,14 @@ def generate_invoices_for_all(companies: list[str], month: int, year: int):
 
             # Ensure we have the critical data before attempting to send the email
             if recipient_email and company_name and invoice_number and csv_path: 
-                # send_invoice_email(
-                #     recipient_email=recipient_email,
-                #     company_name=company_name,
-                #     invoice_number=invoice_number,
-                #     pdf_path=pdf_path,
-                #     csv_path=csv_path, # <-- Pass the constructed CSV path
-                #     invoice_data=invoice_data
-                # )
+                send_invoice_email(
+                    recipient_email=recipient_email,
+                    company_name=company_name,
+                    invoice_number=invoice_number,
+                    pdf_path=pdf_path,
+                    csv_path=csv_path, # <-- Pass the constructed CSV path
+                    invoice_data=invoice_data
+                )
                 print(f"Invoice and Call Log CSV mailed for {company} (ID: {invoice_number}): {pdf_path}")
             else:
                 missing_fields = []

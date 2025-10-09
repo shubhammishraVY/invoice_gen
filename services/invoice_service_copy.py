@@ -72,17 +72,17 @@ def generate_invoice_for_single_company(company_name: str, month: int, year: int
              print(f"Billing service returned no data for {company_name} (ID: {company_id}).")
              return None
 
+        # --- DETERMINE CSV PATH ---
+        billing_period = invoice_data.get('billingPeriod', {})
+        start_date = billing_period.get('startDate')
+        end_date = billing_period.get('endDate')
+
         print("Timezone for the company is:", invoice_data.get('tzone'))
 
         invoice_data = localize_datetime_fields(invoice_data, invoice_data.get('tzone'))
 
         # The invoice_data should contain "invoice_number"
         pdf_path = generate_invoice_pdf(invoice_data)
-        
-        # --- DETERMINE CSV PATH ---
-        billing_period = invoice_data.get('billingPeriod', {})
-        start_date = billing_period.get('startDate')
-        end_date = billing_period.get('endDate')
         
         csv_path = None
         # We use the company_id (which is the name string) to construct the path
@@ -92,21 +92,21 @@ def generate_invoice_for_single_company(company_name: str, month: int, year: int
         
         # --- SEND EMAIL ---
         company_info = invoice_data.get('companyInfo', {})
-        # Note: Using a fixed test email as requested
+        # recipient_email = company_info.get('billingEmail')
         recipient_email = "vishruth.ramesh@vysedeck.com" 
         company_name_from_data = company_info.get('legalName')
         invoice_number = invoice_data.get('invoice_number')
 
         # Ensure we have the critical data before attempting to send the email
         if recipient_email and company_name_from_data and invoice_number and csv_path: 
-            # send_invoice_email(
-            #     recipient_email=recipient_email,
-            #     company_name=company_name_from_data,
-            #     invoice_number=invoice_number,
-            #     pdf_path=pdf_path,
-            #     csv_path=csv_path, # <-- Pass the constructed CSV path
-            #     invoice_data=invoice_data
-            # )
+            send_invoice_email(
+                recipient_email=recipient_email,
+                company_name=company_name_from_data,
+                invoice_number=invoice_number,
+                pdf_path=pdf_path,
+                csv_path=csv_path, # <-- Pass the constructed CSV path
+                invoice_data=invoice_data
+            )
             print(f"Invoice and Call Log CSV mailed for {company_name} (ID: {invoice_number}): {pdf_path}")
         else:
             missing_fields = []
