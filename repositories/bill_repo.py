@@ -8,7 +8,7 @@ def get_invoice(company: str, start_date: str, end_date: str):
     """
     Fetch invoice for a given company and billing period if it exists.
     """
-    invoices_ref = firestore_client.collection("companies").document(company).collection("invoices")
+    invoices_ref = firestore_client.collection("companies").document(company).collection("invoiceTest")
     query = (
         invoices_ref
         .where("billingPeriod.startDate", "==", start_date)
@@ -36,7 +36,7 @@ def save_invoice(company_id: str, invoice_data: dict):
         firestore_client
         .collection("companies")
         .document(company_id)
-        .collection("invoices")
+        .collection("invoiceTest")
     )
 
     # 2. Deterministic ID generation from billing period
@@ -67,3 +67,66 @@ def save_invoice(company_id: str, invoice_data: dict):
     doc_ref.set(invoice_data)
 
     return {"id": doc_ref.id, **invoice_data}
+
+
+
+
+
+def save_payment_record(company_id: str, payment_data: dict):
+    """
+    Saves a payment record under the company's 'payments' subcollection.
+    Example path: companies/{company_id}/payments/{payment_id}
+    """
+    try:
+        # Validate required data
+        payment_id = payment_data.get("payment_id")
+        if not payment_id:
+            raise ValueError("payment_id is missing in payment_data")
+
+        # Reference to the subcollection path
+        payments_ref = (
+            firestore_client
+            .collection("companies")
+            .document(company_id)
+            .collection("payments")
+        )
+
+        # Save or update document
+        payments_ref.document(payment_id).set(payment_data)
+
+        print(f"✅ Payment record saved under {company_id}/payments/{payment_id}")
+
+    except Exception as e:
+        print(f"❌ Failed to save payment record for {company_id}: {e}")
+        raise
+
+
+
+
+def mark_invoice_as_paid(company_id: str, invoice_number: str, payment_data: dict):
+    """
+    Marks an invoice as paid and stores payment reference in the invoice document.
+    """
+    try:
+        invoice_ref = (
+            firestore_client
+            .collection("companies")
+            .document(company_id)
+            .collection("invoiceTest")
+            .document(invoice_number)
+        )
+
+        update_data = {
+            "status": "Paid",
+            "paymentId": payment_data.get("payment_id"),
+            "paymentDate": payment_data.get("payment_date"),
+            "amountPaid": payment_data.get("amount_paid"),
+            "receiptPdf": payment_data.get("receipt_pdf"),
+        }
+
+        invoice_ref.update(update_data)
+        print(f"✅ Invoice {invoice_number} marked as PAID for company {company_id}")
+
+    except Exception as e:
+        print(f"❌ Failed to mark invoice as paid: {e}")
+        raise

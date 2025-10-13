@@ -1,16 +1,24 @@
 from fastapi import FastAPI
-from routes import billing_routes
+from routes import billing_routes, payment_routes, webhook_routes, invoice_routes
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(
-    title="Billing for Calls",
-    version="1.0.0",
-    description="FastAPI service for generating call bills"
+app = FastAPI(title="Billing & Payments Service")
+
+# Enable CORS (so your frontend can call the backend)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or restrict to specific frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Include billing router
-app.include_router(billing_routes.router, prefix="/billing", tags=["Billing"])
+# Include routers
+ 
+app.include_router(invoice_routes.router, tags=["Invoices"])
+app.include_router(payment_routes.router, prefix="/payments", tags=["Payments"])
+app.include_router(webhook_routes.router, prefix="/webhooks", tags=["Webhooks"])
 
-# Health check
 @app.get("/")
 def root():
-    return {"message": "Billing API is running!"}
+    return {"message": "Billing & Payment API is running 🚀"}

@@ -1,0 +1,39 @@
+<html>
+  <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <p>Dear {{ company_name }},</p>
+    <p>Thank you for your payment.</p>
+
+    <p>
+      This is a confirmation that we have received your payment for
+      <strong>Invoice {{ invoice_number }}</strong>.
+    </p>
+
+    <div style="background-color: #f5f7fa; padding: 15px; border-left: 4px solid #104084; margin: 20px 0;">
+      <h3 style="color: #104084; margin-top: 0;">Payment Details</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td><strong>Receipt No:</strong></td><td style="text-align:right;">{{ receipt_number }}</td></tr>
+        <tr><td><strong>Amount Paid:</strong></td><td style="text-align:right;">{{ currency_symbol }} {{ amount_paid }}</td></tr>
+        <tr><td><strong>Payment Mode:</strong></td><td style="text-align:right;">{{ payment_mode }}</td></tr>
+        <tr><td><strong>Payment Date:</strong></td><td style="text-align:right;">{{ payment_date }}</td></tr>
+      </table>
+    </div>
+
+    <p>
+      The official payment receipt is attached to this email for your records.
+    </p>
+
+    <p>Thank you for your continued business.</p>
+
+    <p>
+      Best regards,<br />
+      <strong>VYSEDECK Billing Team</strong><br />
+      Email: {{ sender_email }}<br />
+      Phone: +91 9999999999
+    </p>
+
+    <hr style="border: none; border-top: 1px solid #eee; margin-top: 30px;" />
+    <p style="font-size: 11px; color: #777;">
+      <em>This is an automated email. Please do not reply directly to this address.</em>
+    </p>
+  </body>
+</html>

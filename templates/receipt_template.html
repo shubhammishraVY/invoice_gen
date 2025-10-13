@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Payment Receipt - {{ receipt_number }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #333; margin: 30px; }
+    h1 { text-align: center; color: #104084; }
+    .section { margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    td, th { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f0f0f0; }
+    .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #777; }
+  </style>
+</head>
+<body>
+  <h1>PAYMENT RECEIPT</h1>
+  <p><strong>Receipt No:</strong> {{ receipt_number }}</p>
+  <p><strong>Date:</strong> {{ payment_date }}</p>
+
+  <div class="section">
+    <p><strong>Received From:</strong> {{ company_name }}</p>
+    <p><strong>Invoice Reference:</strong> {{ invoice_number }}</p>
+  </div>
+
+  <div class="section">
+    <table>
+      <tr><th>Amount Paid</th><td>{{ currency_symbol }} {{ "%.2f"|format(amount_paid) }}</td></tr>
+      <tr><th>Payment Mode</th><td>{{ payment_mode }}</td></tr>
+      <tr><th>Payment Date</th><td>{{ payment_date }}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <p><strong>Authorized Signatory</strong></p>
+    <p>{{ authorized_signatory.name }}</p>
+    <p>{{ authorized_signatory.designation }}</p>
+    <p>{{ authorized_signatory.company }}</p>
+  </div>
+
+  <div class="footer">
+    <p>VYSEDECK AI Ventures Pvt Ltd (www.vysedeck.com)</p>
+  </div>
+</body>
+</html>
