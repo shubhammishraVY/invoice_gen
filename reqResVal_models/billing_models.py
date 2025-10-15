@@ -10,7 +10,6 @@ class LineItem(BaseModel):
 
 
 class AuthorizedSignatory(BaseModel):
-    name: str
     designation: str
     company: str
 

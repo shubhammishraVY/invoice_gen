@@ -10,7 +10,7 @@ if __name__ == "__main__":
     # Fetch companies from the repository for dynamic execution
     try:
         # companies = get_all_companies() 
-        companies = ["vysedeck", "webxpress", "dcgpac"]
+        companies = ["webxpress"]
     except Exception as e:
         print(f"CRITICAL: Failed to fetch companies list: {e}")
         # Exit with an error code if initialization fails
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     else:
         print(f"Starting scheduled invoice generation for {len(companies)} companies for {last_month}/{year}...")
         try:
-            generate_invoices_for_all(companies, last_month, year)
+            generate_invoices_for_all(parent_company="vysedeck",companies=companies, month=last_month, year=year)
             print("✅ Job completed successfully.")
         except Exception as e:
             print(f"❌ Job failed unexpectedly during processing: {e}")

@@ -138,7 +138,7 @@ def _serialize_dates(obj):
 
 
 
-def generate_monthly_bill(company: str, month: int | None = None, year: int | None = None):
+def generate_monthly_bill( company: str, tenant: str, isSubEntity: bool, month: int | None = None, year: int | None = None ):
     """
     Generate structured monthly bill for a company. 
     Handles fallbacks to the last completed month and checks for future dates.
@@ -179,7 +179,10 @@ def generate_monthly_bill(company: str, month: int | None = None, year: int | No
     end_date_str = end_date.isoformat()
 
     # 🔹 Check if invoice already exists
-    existing_invoice = get_invoice(company, start_date_str, end_date_str)
+    if isSubEntity:
+        existing_invoice = get_invoice(company=company, tenant=tenant, start_date=start_date_str, end_date=end_date_str)
+    else:
+        existing_invoice = get_invoice(company=tenant, tenant=None, start_date=start_date_str, end_date=end_date_str)
     if existing_invoice:
         print("Returning existing invoice:", existing_invoice["id"])
         # FIX: Ensure existing invoice also has the invoice_number field for pdf_service
@@ -190,12 +193,17 @@ def generate_monthly_bill(company: str, month: int | None = None, year: int | No
     # 🔹 Else generating invoice
 
     # Fetch company billing details
-    billing_details = get_company_billing_details(company)
-    if not billing_details:
-        raise ValueError(f"No billing details found for company {company}")
+    if isSubEntity:
+        billing_details = get_company_billing_details( company_id=company, tenant_id=tenant )
+    else:
+        billing_details = get_company_billing_details( company_id=tenant, tenant_id=None )
+    vendor_details = get_company_billing_details( company_id=company, tenant_id=None )
+    if not billing_details or not vendor_details:
+        raise ValueError(f"No billing details found for company {company} and for tenant {tenant}")
 
     billing = billing_details.get("billing", {})
     billingInfo = billing_details.get("billingInfo", {})
+    vendor_billingInfo = vendor_details.get("billingInfo", {})
 
     # Shorthand usage
     ratePerMin = billing_details.get("ratePerMinute") or 0
@@ -204,8 +212,14 @@ def generate_monthly_bill(company: str, month: int | None = None, year: int | No
     tzone = billing_details.get("tzone")
 
     # Fetch calls from both sources
-    calls_top = get_calls_from_top_level(company, start_date, end_date)
-    calls_nested = get_calls_from_company_doc(company, start_date, end_date)
+    if isSubEntity:
+        calls_top = get_calls_from_top_level(company, start_date, end_date)
+        calls_nested = get_calls_from_company_doc(company, start_date, end_date)
+        calls_top = [c for c in calls_top if c.get("tenantId") == tenant]
+        calls_nested = [c for c in calls_nested if c.get("tenantId") == tenant]
+    else: 
+        calls_top = get_calls_from_top_level(company_id=tenant, start_date=start_date, end_date=end_date)
+        calls_nested = get_calls_from_company_doc(company_id=tenant, start_date=start_date, end_date=end_date)
 
 
     if billing.get("billingPolicy") == "per-call":
@@ -220,7 +234,7 @@ def generate_monthly_bill(company: str, month: int | None = None, year: int | No
 
     total_minutes = total_duration_mins_top + total_duration_mins_nested
 
-    generate_call_log_csv(company, calls_top, calls_nested, start_date, end_date, total_minutes, total_calls_top + total_calls_nested, tzone)
+    generate_call_log_csv(tenant, calls_top, calls_nested, start_date, end_date, total_minutes, total_calls_top + total_calls_nested, tzone)
     
     # --- Billing calculation ---
     rawAmt = total_minutes * ratePerMin
@@ -258,6 +272,14 @@ def generate_monthly_bill(company: str, month: int | None = None, year: int | No
         "billingAddress": active_address,  # only active one
     }
 
+    vendor_active_address = next((addr for addr in vendor_billingInfo.get("billingAddresses", []) if addr.get("isActive")), None) 
+    vendor_info = {
+        "id": vendor_details.get("id"),
+        "legalName": vendor_billingInfo.get("legalName"),
+        "billingEmail": vendor_billingInfo.get("billingEmail"),
+        "billingAddress": vendor_active_address, 
+    }
+
     # --- Invoice metadata ---
     invoice_date = NOW # Use the current time for the invoice generation date
     due_date = invoice_date + timedelta(days=7)
@@ -281,28 +303,30 @@ def generate_monthly_bill(company: str, month: int | None = None, year: int | No
         "invoiceDate": invoice_date.isoformat(),
         "dueDate": due_date.isoformat(),
         "companyInfo": company_info,
-        "companyId": company,
+        "companyId": tenant,
         "billingRates": billing,
         "billingPeriod": {
             "startDate": start_date.isoformat(),
             "endDate": end_date.isoformat()
         },
         "authorizedSignatory": {
-            "name": "Shashank Trivedi",
-            "designation": "Director",
-            "company": "VYSEDECK AI Ventures Pvt Ltd"
+            "designation": "Finance Department",
+            "company": vendor_info.get("legalName")
         }
     }
 
-    invoice_data = _serialize_dates(invoice_data)
+    invoice_data = _serialize_dates(invoice_data)  
 
-    # 🔹 Save invoice in Firestore
-    saved_invoice = save_invoice(company, invoice_data)
+    if isSubEntity:
+        saved_invoice = save_invoice(company, tenant, invoice_data)
+    else:
+        saved_invoice = save_invoice(tenant, None, invoice_data)
 
     print("the saved invoice details are: ",saved_invoice.get("id"))
     
     # CRITICAL: Add the unique doc ID to the data, which pdf_service uses for file naming.
     invoice_data["invoice_number"] = saved_invoice.get("id")
     invoice_data["tzone"] = tzone
+    invoice_data["vendorInfo"] = vendor_info
 
     return invoice_data

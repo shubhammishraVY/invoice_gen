@@ -35,6 +35,8 @@ def send_email(
         template_str = f.read()
     body = template_str.format(**context)
 
+    print(context["payment_url"])
+
     # Prepare attachments
     attachments_list = []
     if attachments:

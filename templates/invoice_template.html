@@ -1,411 +1,294 @@
 <!DOCTYPE html>
-
 <html>
-
 <head>
-  <meta charset="utf-8" />
-  <title>
-    TAX INVOICE | VYSEDECK AI Ventures Pvt Ltd | {{ invoice_number }}
-  </title>
+  <meta charset="UTF-8">
+  <title>Tax Invoice | {{ vendorInfo.legalName | default("VYSEDECK AI Ventures Pvt Ltd") }} | {{ invoice_number }}</title>
   <style>
-    /* ADDED: To eliminate the default physical margin of the PDF page */
     @page {
-      margin-left: 40px;
-      margin-right: 40px;
+      size: A4;
+      margin: 15mm;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
     body {
-      font-family: "Helvetica", "Arial", sans-serif;
-      margin: 0;
-      /* Ensures body margin is zero */
-      padding: 0;
-      /* Ensures body padding is zero */
-      font-size: 12px;
-      /* INCREASED from 10px for better legibility */
-      color: #333;
+      font-family: Arial, sans-serif;
+      font-size: 10pt;
+      line-height: 1.4;
+      color: #000;
+      background: #fff;
     }
 
-    /* --- Colors --- */
-    :root {
-      --primary-color: #104084;
-      --secondary-bg: #f5f7fa;
-      --accent-color: #2e6bc6;
-      --line-color: #ddd;
+    .invoice-container {
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 10mm;
+      background: white;
     }
 
-    .page-header {
+    .header {
       text-align: center;
       margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid var(--line-color);
     }
 
-    .page-header h1 {
-      font-size: 20px;
+    .header h1 {
+      font-size: 24pt;
       font-weight: bold;
-      margin: 0;
-      text-transform: uppercase;
+      margin-bottom: 10px;
     }
 
-    .header-details {
-      display: table;
-      width: 100%;
-      margin-bottom: 15px;
-      font-size: 12px;
-      /* Increased from 10px */
+    .invoice-details {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-size: 10pt;
     }
 
-    .header-left,
-    .header-right {
-      display: table-cell;
-      width: 50%;
-      vertical-align: top;
-    }
-
-    .header-right {
-      text-align: right;
-    }
-
-    .header-details p {
-      margin: 3px 0;
-    }
-
-    .section-title {
-      font-size: 14px;
-      /* Increased from 12px */
-      font-weight: bold;
-      margin: 15px 0 8px 0;
-    }
-
-    .two-column {
-      display: table;
-      width: 100%;
-      margin-bottom: 15px;
-    }
-
-    .column {
-      display: table-cell;
-      width: 50%;
-      vertical-align: top;
-      padding-right: 20px;
-    }
-
-    .column:last-child {
-      padding-right: 0;
-      padding-left: 20px;
-    }
-
-    .address-block {
+    .invoice-details div {
       line-height: 1.6;
     }
 
-    .address-block strong {
-      display: inline;
-      margin-bottom: 0;
-      font-size: 13px;
-      /* Increased from 11px */
+    .from-to-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 20px;
+      font-size: 10pt;
     }
 
-    .address-block>strong {
-      display: block;
-      margin-bottom: 5px;
+    .from-to-section h3 {
+      font-size: 11pt;
+      font-weight: bold;
+      margin-bottom: 6px;
     }
 
-    .address-block p {
+    .from-to-section p {
       margin: 2px 0;
     }
 
     .usage-summary {
-      background-color: #f9f9f9;
-      padding: 10px;
-      border-left: 3px solid var(--primary-color);
-      margin-bottom: 15px;
+      background-color: #f5f5f5;
+      padding: 12px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      font-size: 10pt;
     }
 
-    .usage-summary p {
-      margin: 3px 0;
+    .usage-summary h3 {
+      font-size: 11pt;
+      font-weight: bold;
+      margin-bottom: 6px;
     }
 
-    /* --- Table Styling --- */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 15px;
-      font-size: 11px;
-      /* Increased from 9px */
+      margin-bottom: 20px;
+      font-size: 9pt;
     }
 
-    th,
-    td {
-      border: 1px solid #ddd;
+    table th {
+      background-color: #f0f0f0;
+      border: 1px solid #000;
       padding: 8px;
       text-align: left;
-    }
-
-    th {
-      background-color: #f0f0f0;
       font-weight: bold;
-      text-transform: uppercase;
-      font-size: 11px;
-      /* Increased from 9px */
     }
 
-    .text-center {
+    table td {
+      border: 1px solid #000;
+      padding: 8px;
+    }
+
+    table td.center {
       text-align: center;
     }
 
-    .text-right {
+    table td.right {
       text-align: right;
     }
 
-    .total-row {
-      border: none;
-      font-weight: bold;
-    }
-
-    .total-row td {
-      border: none;
-      padding: 5px 8px;
-    }
-
-    .final-total-row {
+    table tr.total-row {
       background-color: #f0f0f0;
       font-weight: bold;
-      font-size: 13px;
-      /* Increased from 11px */
     }
 
-    .final-total-row td {
-      border-top: 3px double var(--primary-color);
+    .total-words {
+      margin-bottom: 20px;
+      font-size: 10pt;
     }
 
-    .total-in-words {
-      margin-top: 15px;
-      padding: 10px;
-      background-color: #f9f9f9;
-    }
-
-    .total-in-words strong {
-      display: inline-block;
-      margin-right: 5px;
-    }
-
-    .footer-section {
-      display: table;
-      width: 100%;
-      margin-top: 30px;
-    }
-
-    .footer-left,
-    .footer-right {
-      display: table-cell;
-      width: 50%;
-      vertical-align: top;
-    }
-
-    .footer-left {
-      padding-right: 20px;
-    }
-
-    .footer-right {
-      padding-left: 20px;
-    }
-
-    .footer-title {
-      font-size: 13px;
-      /* Increased from 11px */
+    .total-words strong {
       font-weight: bold;
-      margin-bottom: 8px;
     }
 
-    .footer-section p {
+    .payment-terms {
+      margin-bottom: 20px;
+      font-size: 10pt;
+    }
+
+    .payment-terms h3 {
+      font-size: 11pt;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .payment-terms ul {
+      margin-left: 20px;
+    }
+
+    .payment-terms li {
       margin: 3px 0;
-      font-size: 11px;
-      /* Increased from 9px */
     }
 
-    .signature-block {
+    .signature {
       margin-top: 30px;
+      margin-bottom: 20px;
+      font-size: 10pt;
     }
 
-    .signature-block p {
+    .signature p {
       margin: 3px 0;
     }
 
-    .page-footer {
+    .footer {
       text-align: center;
-      font-size: 11px;
-      /* Increased from 9px */
-      color: #777;
-      position: fixed;
-      bottom: 10px;
-      left: 0;
-      right: 0;
-      width: 100%;
-      z-index: 1000;
+      font-size: 9pt;
+      color: #666;
+      margin-top: 30px;
+      padding-top: 10px;
+      border-top: 1px solid #ddd;
+    }
+
+    @media print {
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      .invoice-container {
+        padding: 0;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
     }
   </style>
 </head>
-
 <body>
-  <div class="page-header">
-    <h1>TAX INVOICE</h1>
-  </div>
-
-  <div class="header-details">
-    <div class="header-left">
-      <p>
-        <strong>Invoice No:</strong> {{ invoice_number | default("N/A") }}
-      </p>
-      <p>
-        <strong>Invoice Date:</strong> {{ invoiceDate[:10] | default("N/A") }}
-      </p>
-      <p><strong>Due Date:</strong> {{ dueDate[:10] | default("N/A") }}</p>
-      <p>
-        <strong>Billing Period:</strong> {{ billingPeriod.startDate[:10] |
-        default("N/A") }} to {{ billingPeriod.endDate[:10] | default("N/A") }}
-      </p>
+  <div class="invoice-container">
+    <!-- Header -->
+    <div class="header">
+      <h1>TAX INVOICE</h1>
     </div>
-    <div class="header-right">
-      <p>
-        <strong>Place Of Supply:</strong> {{ placeOfSupply | default("N/A") }}
-      </p>
-      <p>
-        <strong>Purchase Order:</strong> {{ billingRates.purchaseOrder | default("N/A") }}
-      </p>
-      <p><strong>PO-Date:</strong> {{ billingRates.poDate[:10] | default("N/A") }}</p>
-    </div>
-  </div>
 
-  <div class="two-column">
-    <div class="column">
-      <p class="section-title">From:</p>
-      <div class="address-block">
-        <strong>VYSEDECK AI Ventures Pvt Ltd</strong>
-        <p>H1A/20, SECTOR-63, Noida, Uttar Pradesh, India, 201301</p>
-        <p></p>
-        <p><strong>GSTIN:</strong> 09AAKCV7915Q1ZA</p>
-        <p><strong>Phone:</strong> +919930034914</p>
-        <p><strong>Email:</strong> shashank.trivedi@vysedeck.com</p>
+    <!-- Invoice Details -->
+    <div class="invoice-details">
+      <div>
+        <p><strong>Invoice No:</strong> {{ invoice_number | default("N/A") }}</p>
+        <p><strong>Invoice Date:</strong> {{ invoiceDate[:10] | default("N/A") }}</p>
+        <p><strong>Due Date:</strong> {{ dueDate[:10] | default("N/A") }}</p>
+        <p><strong>Billing Period:</strong> {{ billingPeriod.startDate[:10] | default("N/A") }} to {{ billingPeriod.endDate[:10] | default("N/A") }}</p>
+      </div>
+      <div style="text-align: right;">
+        <p><strong>Place Of Supply:</strong> {{ placeOfSupply | default("N/A") }}</p>
+        <p><strong>Purchase Order:</strong> {{ billingRates.purchaseOrder | default("N/A") }}</p>
+        <p><strong>PO-Date:</strong> {{ billingRates.poDate[:10] | default("N/A") }}</p>
       </div>
     </div>
-    <div class="column">
-      <p class="section-title">To:</p>
-      <div class="address-block">
-        <strong>{{ companyInfo.legalName | default("Customer Name Not Available")
-          }}</strong>
-        <p>
-          {{ companyInfo.billingAddress.address | default("Address Not
-          Available") }}
-        </p>
-        <p></p>
-        <p>
-          <strong>GSTIN:</strong> {{ companyInfo.billingAddress.gstNumber |
-          default("N/A") }}
-        </p>
-        <p>
-          <strong>Phone:</strong> {{ companyInfo.billingAddress.number |
-          default("N/A") }}
-        </p>
-        <p>
-          <strong>Email:</strong> {{ companyInfo.billingEmail | default("N/A")
-          }}
-        </p>
+
+    <!-- From/To Section -->
+    <div class="from-to-section">
+      <div>
+        <h3>From:</h3>
+        <p><strong>{{ vendorInfo.legalName | default("Vendor Name Not Available") }}</strong></p>
+        <p>{{ vendorInfo.billingAddress.address | default("Address Not Available") }}</p>
+        <p><strong>GSTIN:</strong> {{ vendorInfo.billingAddress.gstNumber | default("N/A") }}</p>
+        <p><strong>Phone:</strong> {{ vendorInfo.billingAddress.number | default("N/A") }}</p>
+        <p><strong>Email:</strong> {{ vendorInfo.billingEmail | default("N/A") }}</p>
+      </div>
+      <div>
+        <h3>To:</h3>
+        <p><strong>{{ companyInfo.legalName | default("Customer Name Not Available") }}</strong></p>
+        <p>{{ companyInfo.billingAddress.address | default("Address Not Available") }}</p>
+        <p><strong>GSTIN:</strong> {{ companyInfo.billingAddress.gstNumber | default("N/A") }}</p>
+        <p><strong>Phone:</strong> {{ companyInfo.billingAddress.number | default("N/A") }}</p>
+        <p><strong>Email:</strong> {{ companyInfo.billingEmail | default("N/A") }}</p>
       </div>
     </div>
-  </div>
 
-  <div class="usage-summary">
-    <p class="section-title" style="margin-top: 0">Usage Summary:</p>
-    <p>
-      <strong>Total Calls:</strong> {{ usageData.totalCalls | default(0) }}
-    </p>
-    <p>
-      <strong>Total Duration:</strong> {{ usageData.totalBilledMinutes |
-      default(0) }} minutes
-    </p>
-    <p>
-      <strong>Billed Minutes:</strong> {{ usageData.totalBilledMinutes |
-      default(0) }} ({{ usageData.billingPolicy | default("N/A") }} policy)
-    </p>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th style="width: 50%">Item & Description</th>
-        <th style="width: 15%" class="text-center">Qty</th>
-        <th style="width: 17.5%" class="text-right">
-          Rate ({{ billingRates.currency | default("Rs.") }})
-        </th>
-        <th style="width: 17.5%" class="text-right">
-          Amount ({{ billingRates.currency | default("Rs.") }})
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in lineItems %}
-      <tr>
-        <td>{{ item.description }}</td>
-        <td class="text-center">{{ item.quantity }}</td>
-        <td class="text-right">{{ "%.2f" | format(item.rate) }}</td>
-        <td class="text-right">{{ "%.2f" | format(item.amount) }}</td>
-      </tr>
-      {% endfor %}
-
-      <tr class="total-row">
-        <td colspan="3" class="text-right">Subtotal</td>
-        <td class="text-right">
-          {{ "%.2f" | format(subtotal | default(0)) }}
-        </td>
-      </tr>
-
-      <tr class="total-row">
-        <td colspan="3" class="text-right">
-          IGST @ {{ billingRates.gstRate | default(0) }}%
-        </td>
-        <td class="text-right">
-          {{ "%.2f" | format(gstAmount | default(0)) }}
-        </td>
-      </tr>
-
-      <tr class="final-total-row">
-        <td colspan="3" class="text-right">Total</td>
-        <td class="text-right">
-          {{ "%.2f" | format(totalAmount | default(0)) }}
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="total-in-words">
-    <p>
-      <strong>Total In Words:</strong> {{ totalInWords | default("N/A") }}
-    </p>
-  </div>
-
-  <div class="footer-section">
-    <div class="footer-left">
-      <p class="footer-title">Payment Terms:</p>
-      <p>Payment due within 7 days of invoice date.</p>
-      <p>Taxes applicable as per law.</p>
-      <p>TDS to be deducted where applicable.</p>
+    <!-- Usage Summary -->
+    <div class="usage-summary">
+      <h3>Usage Summary:</h3>
+      <p><strong>Total Calls:</strong> {{ usageData.totalCalls | default(0) }}</p>
+      <p><strong>Total Duration:</strong> {{ usageData.totalBilledMinutes | default(0) }} minutes</p>
+      <p><strong>Billed Minutes:</strong> {{ usageData.totalBilledMinutes | default(0) }} ({{ usageData.billingPolicy | default("N/A") }} policy)</p>
     </div>
-  </div>
 
-  <div class="signature-block">
-    <p class="footer-title">Authorized Signatory</p>
-    <p>{{ authorizedSignatory.name | default("Shashank Trivedi") }}</p>
-    <p>{{ authorizedSignatory.designation | default("Director") }}</p>
-    <p>
-      {{ authorizedSignatory.company | default("VYSEDECK AI Ventures Pvt Ltd")
-      }}
-    </p>
-  </div>
+    <!-- Line Items Table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Item & Description</th>
+          <th class="center">Qty</th>
+          <th class="right">Rate</th>
+          <th class="right">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in lineItems %}
+        <tr>
+          <td>{{ item.description }}</td>
+          <td class="center">{{ item.quantity }}</td>
+          <td class="right">{{ currency_symbol }} {{ "%.2f"|format(item.rate) }}</td>
+          <td class="right">{{ currency_symbol }} {{ "%.2f"|format(item.amount) }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="subtotal-row">
+          <td colspan="3"><strong>Subtotal</strong></td>
+          <td class="right">{{ currency_symbol }} {{ "%.2f"|format(subtotal | default(0)) }}</td>
+        </tr>
+        <tr class="subtotal-row">
+          <td colspan="3"><strong>IGST @ {{ billingRates.gstRate | default(0) }}%</strong></td>
+          <td class="right">{{ currency_symbol }} {{ "%.2f"|format(gstAmount | default(0)) }}</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="3"><strong>Total</strong></td>
+          <td class="right">{{ currency_symbol }} {{ "%.2f"|format(totalAmount | default(0)) }}</td>
+        </tr>
+      </tbody>
+    </table>
 
-  <div class="page-footer">
-    <p>Vysedeck AI Ventures Pvt Ltd (www.vysedeck.com)</p>
+    <!-- Total in Words -->
+    <div class="total-words">
+      <p><strong>Total In Words:</strong> {{ totalInWords | default("N/A") }}</p>
+    </div>
+
+    <!-- Payment Terms -->
+    <div class="payment-terms">
+      <h3>Payment Terms:</h3>
+      <ul>
+        <li>Payment due within 7 days of invoice date.</li>
+        <li>Taxes applicable as per law.</li>
+        <li>TDS to be deducted where applicable.</li>
+      </ul>
+    </div>
+
+    <!-- Signature -->
+    <div class="signature">
+      <p><strong>Authorized Signatory</strong></p>
+      <p>{{ authorizedSignatory.designation | default("Finance Department") }}</p>
+      <p>{{ authorizedSignatory.company | default("VYSEDECK AI Ventures Pvt Ltd") }}</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>{{ vendorInfo.legalName | default("VYSEDECK AI Ventures Pvt Ltd") }}</p>
+    </div>
   </div>
 </body>
-
 </html>

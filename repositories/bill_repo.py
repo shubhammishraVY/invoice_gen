@@ -4,11 +4,14 @@ from reqResVal_models.billing_models import InvoiceModel
 from pydantic import ValidationError
 
 
-def get_invoice(company: str, start_date: str, end_date: str):
+def get_invoice(company: str, tenant: str | None, start_date: str, end_date: str):
     """
     Fetch invoice for a given company and billing period if it exists.
     """
-    invoices_ref = firestore_client.collection("companies").document(company).collection("invoiceTest")
+    if tenant is None:
+        invoices_ref = firestore_client.collection("companies").document(company).collection("invoiceTest")
+    else:
+        invoices_ref = firestore_client.collection("companies").document(company).collection("tenants").document(tenant).collection("invoiceTest")
     query = (
         invoices_ref
         .where("billingPeriod.startDate", "==", start_date)
@@ -21,7 +24,7 @@ def get_invoice(company: str, start_date: str, end_date: str):
     return None
 
 
-def save_invoice(company_id: str, invoice_data: dict):
+def save_invoice(company_id: str, tenant_id: str | None, invoice_data: dict):
     """
     Save invoice data under companies/{company_id}/invoices.
     Validates data using Pydantic and generates a deterministic ID.
@@ -32,12 +35,10 @@ def save_invoice(company_id: str, invoice_data: dict):
     except ValidationError as e:
         raise ValueError(f"Invoice data validation failed for company {company_id}: {e}")
 
-    invoices_ref = (
-        firestore_client
-        .collection("companies")
-        .document(company_id)
-        .collection("invoiceTest")
-    )
+    if tenant_id is None:
+        invoices_ref = (firestore_client.collection("companies").document(company_id).collection("invoiceTest"))
+    else:
+        invoices_ref = (firestore_client.collection("companies").document(company_id).collection("tenants").document(tenant_id).collection("invoiceTest"))
 
     # 2. Deterministic ID generation from billing period
     billing_period = invoice_data.get("billingPeriod", {})
@@ -56,8 +57,11 @@ def save_invoice(company_id: str, invoice_data: dict):
     if not month or not year:
         # This check is now redundant but kept as a safeguard
         raise ValueError("The month and year not parsed correctly")
+    if tenant_id is None:
+        doc_id = f"{company_id[:3].upper()}{month}{year}"
+    else:
+        doc_id = f"{tenant_id[:3].upper()}{month}{year}"
 
-    doc_id = f"{company_id[:3].upper()}{month}{year}"
     doc_ref = invoices_ref.document(doc_id)
 
     # Add server timestamp
