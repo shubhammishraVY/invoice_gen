@@ -109,8 +109,9 @@ def send_invoice_to_client(invoice_data: dict, isSubEntity: bool):
         print(f"❌ Failed to send invoice email: {e}")
         return None
 
-def generate_invoices_for_all(parent_company: str, companies: list[str], month: int, year: int):
+def generate_invoices_for_all(companies: list[str], month: int, year: int):
     """Generate invoices for all companies & tenants, then email them."""
+    parent_company = "vysedeck"
     all_invoices = []
     for company in companies:
         try:
