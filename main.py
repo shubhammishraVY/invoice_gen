@@ -7,7 +7,11 @@ app = FastAPI(title="Billing & Payments Service")
 # Enable CORS (so your frontend can call the backend)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # or restrict to specific frontend domain
+    allow_origins=[
+        "http://portal.vysedeck.com:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

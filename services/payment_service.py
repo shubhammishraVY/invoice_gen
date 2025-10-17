@@ -46,9 +46,14 @@ def create_stripe_checkout_session(invoice_data):
 def create_razorpay_order(invoice_data):
     try:
         order = razorpay_client.order.create({
-            "amount": int(invoice_data["totalAmount"] * 100 ),
+            "amount": int(invoice_data["totalAmount"] * 100),
             "currency": "INR",
             "receipt": invoice_data["invoice_number"],
+            "notes": {
+                "invoice_id": invoice_data["invoice_number"],
+                "company_id": invoice_data.get("companyId"),
+                "tenant_id": invoice_data.get("tenant_id", "default"),
+            }
         })
         return order
     except Exception as e:

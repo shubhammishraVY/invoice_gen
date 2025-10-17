@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Request, HTTPException
 import os, hmac, hashlib, stripe
 from dotenv import load_dotenv
+from datetime import datetime
 from services.payment_service import generate_payment_receipt
+from repositories.invoice_repo import get_invoice_by_id
 
 load_dotenv()
 router = APIRouter()
@@ -43,10 +45,29 @@ async def razorpay_webhook(request: Request):
     event = await request.json()
     if event.get("event") == "payment.captured":
         payment_data = event["payload"]["payment"]["entity"]
-        invoice_id = payment_data["notes"].get("invoice_id", "unknown")
+        
+        # Extract invoice details from notes
+        invoice_id = payment_data["notes"].get("invoice_id")
+        company_id = payment_data["notes"].get("company_id")
+        tenant_id = payment_data["notes"].get("tenant_id", "default")
+        
         print(f"✅ Razorpay payment captured for invoice {invoice_id}")
-
-        # 🔹 Call your unified service
-        generate_payment_receipt(invoice_id, payment_data=payment_data)
+        
+        # Fetch full invoice data
+        invoice = get_invoice_by_id(company_id, tenant_id, invoice_id)
+        if not invoice:
+            print(f"❌ Invoice {invoice_id} not found")
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        
+        # Prepare payment data for receipt generation
+        payment_info = {
+            **invoice,
+            "payment_id": payment_data["id"],
+            "payment_date": datetime.utcnow().isoformat(),
+            "payment_mode": "Razorpay",
+        }
+        
+        # Generate receipt and mark as paid
+        generate_payment_receipt(payment_info)
 
     return {"status": "success"}
