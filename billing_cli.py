@@ -10,7 +10,7 @@ if __name__ == "__main__":
     # Fetch companies from the repository for dynamic execution
     try:
         # companies = get_all_companies() 
-        companies = ["webxpress"]
+        companies = ["vysedeck"]
     except Exception as e:
         print(f"CRITICAL: Failed to fetch companies list: {e}")
         # Exit with an error code if initialization fails
