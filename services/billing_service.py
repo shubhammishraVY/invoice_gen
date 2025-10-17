@@ -312,7 +312,8 @@ def generate_monthly_bill( company: str, tenant: str, isSubEntity: bool, month: 
         "authorizedSignatory": {
             "designation": "Finance Department",
             "company": vendor_info.get("legalName")
-        }
+        },
+        "payment_Status": "pending"
     }
 
     invoice_data = _serialize_dates(invoice_data)  

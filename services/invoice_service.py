@@ -15,10 +15,10 @@ def _construct_csv_filepath(company_id: str, start_date_str: str, end_date_str: 
     try:
         start_date = datetime.strptime(start_date_str[:10], "%Y-%m-%d").strftime("%Y-%m-%d")
         end_date = datetime.strptime(end_date_str[:10], "%Y-%m-%d").strftime("%Y-%m-%d")
-        filename = f"{company_id}_call_logs_{start_date}_to_{end_date}.csv"
+        filename = f"{company_id}call_logs{start_date}to{end_date}.csv"
         return f"invoices/{filename}"
     except Exception as e:
-        print(f"⚠️ Error constructing CSV path for {company_id}: {e}")
+        print(f"⚠ Error constructing CSV path for {company_id}: {e}")
         return ""
 
 def send_invoice_to_client(invoice_data: dict, isSubEntity: bool):
@@ -68,6 +68,11 @@ def send_invoice_to_client(invoice_data: dict, isSubEntity: bool):
         else:
             token = generate_invoice_token( invoice_data["companyId"], None, invoice_data["invoice_number"], expires_in_hours=72 )
 
+        # NOTE: token generation is left in place but we use the hardcoded payment URL
+        # per request (no token appended).
+        # Using provided hardcoded URL now:
+        payment_url = "http://portal.vysedeck.com:5173/login"
+
         context = {
             "legalName": vendor_info.get("legalName"),
             "invoice_number": invoice_number,
@@ -85,7 +90,7 @@ def send_invoice_to_client(invoice_data: dict, isSubEntity: bool):
             "currency_symbol": currency_symbol,
             "due_date": invoice_data.get('dueDate', '')[:10],
             "sender_email": sender_email,
-            "payment_url": f"{FRONTEND_PAYMENT_URL}?token={token}"
+            "payment_url": payment_url
         }
 
         # --- Attachments ---

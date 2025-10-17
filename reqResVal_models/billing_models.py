@@ -32,3 +32,4 @@ class InvoiceModel(BaseModel):
     billingRates: Dict[str, Any]  # full billing map
     billingPeriod: Dict[str, str]  # startDate, endDate
     authorizedSignatory: AuthorizedSignatory  # NEW: Signatory details
+    payment_status: str

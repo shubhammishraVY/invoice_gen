@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes import billing_routes, payment_routes, webhook_routes, invoice_routes
+from routes import billing_routes, payment_routes, webhook_routes, invoice_routes, call_logs_route
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Billing & Payments Service")
@@ -18,6 +18,8 @@ app.add_middleware(
 app.include_router(invoice_routes.router, tags=["Invoices"])
 app.include_router(payment_routes.router, prefix="/payments", tags=["Payments"])
 app.include_router(webhook_routes.router, prefix="/webhooks", tags=["Webhooks"])
+#only for testing
+app.include_router(call_logs_route.router)
 
 @app.get("/")
 def root():
