@@ -78,14 +78,19 @@ def save_invoice(company_id: str, tenant_id: str | None, invoice_data: dict):
 
 def save_payment_record(company_id: str, payment_data: dict):
     """
-    Saves a payment record under the company's 'payments' subcollection.
-    Example path: companies/{company_id}/payments/{payment_id}
+    Saves complete payment record under the company's 'payments' subcollection.
+    Document ID: REC_{invoice_number}
+    Path: companies/{company_id}/payments/REC_{invoice_number}
     """
     try:
         # Validate required data
         payment_id = payment_data.get("payment_id")
+        invoice_number = payment_data.get("invoice_number")
+        
         if not payment_id:
             raise ValueError("payment_id is missing in payment_data")
+        if not invoice_number:
+            raise ValueError("invoice_number is missing in payment_data")
 
         # Reference to the subcollection path
         payments_ref = (
@@ -95,10 +100,24 @@ def save_payment_record(company_id: str, payment_data: dict):
             .collection("payments")
         )
 
-        # Save or update document
-        payments_ref.document(payment_id).set(payment_data)
+        # Complete payment record - NO receipt_pdf field
+        payment_record = {
+            "payment_id": payment_id,
+            "invoice_number": invoice_number,
+            "amount_paid": payment_data.get("amount_paid"),
+            "currency": payment_data.get("currency"),
+            "payment_date": payment_data.get("payment_date"),
+            "payment_mode": payment_data.get("payment_mode"),
+            "razorpay_order_id": payment_data.get("razorpay_order_id"),
+            "razorpay_signature": payment_data.get("razorpay_signature"),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
 
-        print(f"✅ Payment record saved under {company_id}/payments/{payment_id}")
+        # Use REC_{invoice_number} as document ID
+        doc_id = f"REC_{invoice_number}"
+        payments_ref.document(doc_id).set(payment_record)
+
+        print(f"✅ Payment record saved under {company_id}/payments/{doc_id}")
 
     except Exception as e:
         print(f"❌ Failed to save payment record for {company_id}: {e}")
@@ -106,10 +125,9 @@ def save_payment_record(company_id: str, payment_data: dict):
 
 
 
-
 def mark_invoice_as_paid(company_id: str, invoice_number: str, payment_data: dict):
     """
-    Marks an invoice as paid and stores payment reference in the invoice document.
+    Marks an invoice as paid - ONLY updates payment_status field.
     """
     try:
         invoice_ref = (
@@ -120,16 +138,13 @@ def mark_invoice_as_paid(company_id: str, invoice_number: str, payment_data: dic
             .document(invoice_number)
         )
 
+        # ONLY update payment_status, nothing else
         update_data = {
-            "status": "Paid",
-            "paymentId": payment_data.get("payment_id"),
-            "paymentDate": payment_data.get("payment_date"),
-            "amountPaid": payment_data.get("amount_paid"),
-            "receiptPdf": payment_data.get("receipt_pdf"),
+            "payment_status": "paid",
         }
 
         invoice_ref.update(update_data)
-        print(f"✅ Invoice {invoice_number} marked as PAID for company {company_id}")
+        print(f"✅ Invoice {invoice_number} payment_status updated to 'paid'")
 
     except Exception as e:
         print(f"❌ Failed to mark invoice as paid: {e}")

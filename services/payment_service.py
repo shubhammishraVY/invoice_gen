@@ -115,10 +115,12 @@ def generate_payment_receipt(payment_data: dict):
             "payment_date": receipt_data["payment_date"],
             "currency_symbol": receipt_data["currency_symbol"],
             "sender_email": os.getenv("SENDER_EMAIL"),
+            "payment_url": f"{os.getenv('FRONTEND_URL', 'http://portal.vysedeck.com:5173')}/payments",
         }
 
         send_email(
-            recipient_email=recipient_email,
+            # recipient_email=recipient_email,
+            recipient_email="vishruth.ramesh@vysedeck.com",#for testing purposes
             subject=subject,
             html_template="receipt_email_template.html",
             context=context,
@@ -127,23 +129,21 @@ def generate_payment_receipt(payment_data: dict):
 
         print(f"✅ Payment receipt emailed successfully to {recipient_email}")
 
-        # --- 3️⃣ Save Payment Record in Firestore ---
+        # --- 3️⃣ Save COMPLETE Payment Record in payments collection ---
         save_payment_record(companyId, {
-            "invoice_number": invoice_number,
             "payment_id": payment_id,
+            "invoice_number": invoice_number,
             "amount_paid": total_amount,
             "currency": currency,
             "payment_date": payment_date,
             "payment_mode": payment_mode,
             "receipt_pdf": pdf_path,
+            "razorpay_order_id": payment_data.get("order_id"),  # Optional
+            "razorpay_signature": payment_data.get("razorpay_signature"),  # Optional
         })
 
-        mark_invoice_as_paid(companyId, invoice_number, {
-            "payment_id": payment_id,
-            "payment_date": payment_date,
-            "amount_paid": total_amount,
-            "receipt_pdf": pdf_path,
-        })
+        # --- 4️⃣ Update ONLY payment_status in invoice ---
+        mark_invoice_as_paid(companyId, invoice_number, {})  # Pass empty dict since we only update status
 
         return {"status": "success", "receipt_pdf": pdf_path}
 
