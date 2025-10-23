@@ -2,6 +2,7 @@ import os
 import base64
 from postmarker.core import PostmarkClient
 from dotenv import load_dotenv
+from jinja2 import Template
 
 load_dotenv()
 
@@ -30,10 +31,11 @@ def send_email(
         raise ValueError("POSTMARK_API_TOKEN missing in environment.")
     postmark = PostmarkClient(server_token=POSTMARK_API_TOKEN)
 
-    # Load HTML template
+    # Load HTML template and render with Jinja2
     with open(os.path.join(TEMPLATE_DIR, html_template), "r", encoding="utf-8") as f:
         template_str = f.read()
-    body = template_str.format(**context)
+    template = Template(template_str)
+    body = template.render(**context)
 
     print(context["payment_url"])
 
