@@ -1,55 +1,89 @@
-# from fastapi import APIRouter, Query, HTTPException, status
-# # Import the renamed single-company function
-# from services.invoice_service_copy import generate_invoice_for_single_company 
-# from reqResVal_models.billing_models import InvoiceModel
-# from typing import Dict, Any
+from fastapi import APIRouter, Query, HTTPException, status
+from services.invoice_service_copy import generate_invoice_for_company
+from typing import Dict, Any
 
-# router = APIRouter()
+router = APIRouter()
 
-# @router.post("/generate/{company_name}", response_model=InvoiceModel)
-# def generate_bill_for_company(
-#     # Use Query parameter for the company name
-#     company_name: str ,
-#     month: int | None = Query(None, description="Month (1-12). Defaults to last completed month"),
-#     year: int | None = Query(None, description="Year. Defaults to current year if not provided")
-# ) -> Dict[str, Any]:
-#     """
-#     Triggers the generation, PDF creation, CSV attachment, and mailing of a 
-#     single invoice for a company identified by its name for the given period.
+
+@router.post("/generate")
+def generate_invoice(
+    companyId: str = Query(..., description="Company ID (use 'vysedeck' for main entity)"),
+    tenantId: str = Query(..., description="Tenant ID (same as companyId if main entity, otherwise sub-entity ID)"),
+    month: int | None = Query(None, description="Month (1-12). Defaults to last completed month"),
+    year: int | None = Query(None, description="Year. Defaults to current year if not provided")
+) -> Dict[str, Any]:
+    """
+    Generates an invoice for either:
+    1. Main entity: when companyId == 'vysedeck' (not a sub-entity relationship)
+    2. Sub-entity: when companyId != 'vysedeck' (tenantId is a sub-entity)
     
-#     Returns the generated InvoiceModel data on success.
-#     """
+    The invoice is generated, PDF and CSV are created, and an email is sent.
     
-#     print(f"Received single invoice request for {company_name} for {month}/{year}.")
+    Returns the generated invoice data on success.
+    """
     
-#     try:
-#         # Call the single-company generation function
-#         invoice_data = generate_invoice_for_single_company(company_name, month, year)
+    print(f"📨 Received invoice request for companyId={companyId}, tenantId={tenantId}, period={month}/{year}")
+    
+    try:
+        # The service will automatically determine if this is a sub-entity relationship
+        # based on whether companyId == "vysedeck"
         
-#         if invoice_data is None:
-#             # This covers: Company not found, or Billing service returned no data.
-#             raise HTTPException(
-#                 status_code=status.HTTP_404_NOT_FOUND, 
-#                 detail=f"Invoice generation failed: Company '{company_name}' not found or bill data could not be generated."
-#             )
+        # Call the unified invoice generation function
+        invoice_data = generate_invoice_for_company(
+            company_id=companyId,
+            tenant_id=tenantId,
+            month=month,
+            year=year
+        )
         
-#         # FastAPI uses response_model=InvoiceModel to automatically validate 
-#         # the returned 'invoice_data' dictionary against the Pydantic model.
-#         print("✅ Job completed successfully.")
-#         return invoice_data
+        # Check if invoice generation was successful
+        if not invoice_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Invoice generation failed: No billing data found for the specified parameters."
+            )
         
-#     except HTTPException:
-#         # Re-raise the 404/other HTTP exceptions
-#         raise
-#     except RuntimeError as e:
-#         # Catch errors from the repository layer (e.g., get_all_companies failed)
-#         raise HTTPException(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#             detail=f"CRITICAL SYSTEM ERROR during initialization: {e}"
-#         )
-#     except Exception as e:
-#         print(f"❌ Job failed unexpectedly during processing: {e}")
-#         raise HTTPException(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#             detail="An unexpected error occurred during invoice generation."
-#         )
+        print("✅ Invoice generation and mailing completed successfully")
+        return invoice_data
+        
+    except ValueError as ve:
+        # Handle specific billing service errors (like future date validation)
+        print(f"⚠️ Validation error: {ve}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ve)
+        )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        print(f"❌ Invoice generation failed unexpectedly: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred during invoice generation: {str(e)}"
+        )
+
+
+@router.get("/invoice/{invoice_id}")
+def get_invoice_by_id(invoice_id: str) -> Dict[str, Any]:
+    """
+    Retrieves an existing invoice by its ID.
+    """
+    from repositories.bill_repo import get_invoice_by_id
+    
+    try:
+        invoice = get_invoice_by_id(invoice_id)
+        if not invoice:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Invoice with ID {invoice_id} not found"
+            )
+        return invoice
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error retrieving invoice {invoice_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve invoice: {str(e)}"
+        )
