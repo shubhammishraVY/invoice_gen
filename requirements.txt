@@ -7,6 +7,7 @@ pendulum
 postmarker # for mailing via POSTMARKMAIL
 stripe
 razorpay
+APScheduler # for background task scheduling
 # NOTE on weasyprint dependency:
 # weasyprint requires the GTK+ runtime environment for rendering.
 # This is because it uses Cairo and Pango libraries which are often
