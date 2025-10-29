@@ -4,6 +4,7 @@ from repositories.companies_repo import get_company_billing_details
 from repositories.bill_repo import save_invoice, get_invoice
 import math
 from services.csv_service import generate_call_log_csv
+from reqResVal_models.billing_models import PaymentStatus
 
 # Use the current time for reference
 NOW = datetime.now(timezone.utc)
@@ -313,7 +314,7 @@ def generate_monthly_bill( company: str, tenant: str, isSubEntity: bool, month: 
             "designation": "Finance Department",
             "company": vendor_info.get("legalName")
         },
-        "payment_status": "pending"
+        "payment_status": PaymentStatus.PENDING.value
     }
 
     invoice_data = _serialize_dates(invoice_data)  

@@ -1,5 +1,20 @@
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
+from enum import Enum
+
+
+class PaymentStatus(str, Enum):
+    """
+    Payment status enum with exactly 4 allowed values:
+    - pending: Invoice created, payment not yet received
+    - paid: Invoice paid before or on due date
+    - due: Invoice not paid and past due date
+    - due_paid: Invoice paid after due date
+    """
+    PENDING = "pending"
+    PAID = "paid"
+    DUE = "due"
+    DUE_PAID = "due_paid"
 
 
 class LineItem(BaseModel):

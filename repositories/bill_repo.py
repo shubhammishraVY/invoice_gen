@@ -1,6 +1,6 @@
 from db_configs.firebase_db import firestore_client
 from datetime import datetime, timezone
-from reqResVal_models.billing_models import InvoiceModel
+from reqResVal_models.billing_models import InvoiceModel, PaymentStatus
 from pydantic import ValidationError
 
 
@@ -127,7 +127,9 @@ def save_payment_record(company_id: str, payment_data: dict):
 
 def mark_invoice_as_paid(company_id: str, invoice_number: str, payment_data: dict):
     """
-    Marks an invoice as paid - ONLY updates payment_status field.
+    Marks an invoice as paid - updates payment_status based on due date.
+    - If paid before or on due date: status = "paid"
+    - If paid after due date: status = "due_paid"
     """
     try:
         invoice_ref = (
@@ -138,14 +140,189 @@ def mark_invoice_as_paid(company_id: str, invoice_number: str, payment_data: dic
             .document(invoice_number)
         )
 
-        # ONLY update payment_status, nothing else
+        # Fetch the invoice to get the due date
+        invoice_doc = invoice_ref.get()
+        if not invoice_doc.exists:
+            raise ValueError(f"Invoice {invoice_number} not found")
+        
+        invoice_data = invoice_doc.to_dict()
+        due_date_str = invoice_data.get("dueDate")
+        
+        if not due_date_str:
+            raise ValueError(f"Invoice {invoice_number} has no due date")
+        
+        # Parse due date (ISO format string)
+        try:
+            due_date = datetime.fromisoformat(due_date_str.replace('Z', '+00:00'))
+        except (ValueError, AttributeError):
+            # Try parsing just the date part
+            due_date = datetime.strptime(due_date_str.split('T')[0], "%Y-%m-%d")
+            due_date = due_date.replace(tzinfo=timezone.utc)
+        
+        # Get current date
+        current_date = datetime.now(timezone.utc)
+        
+        # Determine payment status based on due date
+        if current_date.date() <= due_date.date():
+            payment_status = PaymentStatus.PAID.value
+            status_msg = "paid (on time)"
+        else:
+            payment_status = PaymentStatus.DUE_PAID.value
+            status_msg = "due_paid (paid after due date)"
+
+        # Update only payment_status
         update_data = {
-            "payment_status": "paid",
+            "payment_status": payment_status,
         }
 
         invoice_ref.update(update_data)
-        print(f"✅ Invoice {invoice_number} payment_status updated to 'paid'")
+        print(f"✅ Invoice {invoice_number} payment_status updated to '{status_msg}'")
 
     except Exception as e:
         print(f"❌ Failed to mark invoice as paid: {e}")
+        raise
+
+
+def update_overdue_invoices(company_id: str, tenant_id: str | None = None):
+    """
+    Updates all pending invoices past their due date to 'due' status.
+    Can be called periodically or on-demand.
+    
+    Args:
+        company_id: The company ID
+        tenant_id: Optional tenant ID for nested structure
+        
+    Returns:
+        dict: Summary of updates performed
+    """
+    try:
+        # Get reference to invoices collection
+        if tenant_id is None:
+            invoices_ref = (
+                firestore_client
+                .collection("companies")
+                .document(company_id)
+                .collection("invoiceTest")
+            )
+        else:
+            invoices_ref = (
+                firestore_client
+                .collection("companies")
+                .document(company_id)
+                .collection("tenants")
+                .document(tenant_id)
+                .collection("invoiceTest")
+            )
+        
+        # Query for pending invoices
+        pending_invoices = (
+            invoices_ref
+            .where("payment_status", "==", PaymentStatus.PENDING.value)
+            .stream()
+        )
+        
+        current_date = datetime.now(timezone.utc)
+        updated_count = 0
+        skipped_count = 0
+        
+        for invoice_doc in pending_invoices:
+            invoice_data = invoice_doc.to_dict()
+            invoice_id = invoice_doc.id
+            due_date_str = invoice_data.get("dueDate")
+            
+            if not due_date_str:
+                print(f"⚠️ Invoice {invoice_id} has no due date, skipping")
+                skipped_count += 1
+                continue
+            
+            # Parse due date
+            try:
+                due_date = datetime.fromisoformat(due_date_str.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                try:
+                    due_date = datetime.strptime(due_date_str.split('T')[0], "%Y-%m-%d")
+                    due_date = due_date.replace(tzinfo=timezone.utc)
+                except Exception:
+                    print(f"⚠️ Invoice {invoice_id} has invalid due date format, skipping")
+                    skipped_count += 1
+                    continue
+            
+            # Check if past due
+            if current_date.date() > due_date.date():
+                # Update to 'due' status
+                invoice_doc.reference.update({
+                    "payment_status": PaymentStatus.DUE.value
+                })
+                print(f"✅ Invoice {invoice_id} updated from 'pending' to 'due'")
+                updated_count += 1
+        
+        summary = {
+            "updated": updated_count,
+            "skipped": skipped_count,
+            "message": f"Updated {updated_count} overdue invoices to 'due' status"
+        }
+        print(f"📊 {summary['message']}")
+        return summary
+        
+    except Exception as e:
+        print(f"❌ Failed to update overdue invoices: {e}")
+        raise
+
+
+def update_all_overdue_invoices():
+    """
+    Updates overdue invoices across all companies.
+    This function can be called by a scheduled task or endpoint.
+    
+    Returns:
+        dict: Summary of all updates
+    """
+    try:
+        total_updated = 0
+        total_skipped = 0
+        companies_processed = 0
+        
+        # Get all companies
+        companies_ref = firestore_client.collection("companies")
+        companies = companies_ref.stream()
+        
+        for company_doc in companies:
+            company_id = company_doc.id
+            print(f"🔍 Processing company: {company_id}")
+            
+            # Update top-level invoices
+            try:
+                result = update_overdue_invoices(company_id, tenant_id=None)
+                total_updated += result["updated"]
+                total_skipped += result["skipped"]
+            except Exception as e:
+                print(f"⚠️ Error processing company {company_id}: {e}")
+            
+            # Check for tenants
+            tenants_ref = company_doc.reference.collection("tenants")
+            tenants = tenants_ref.stream()
+            
+            for tenant_doc in tenants:
+                tenant_id = tenant_doc.id
+                print(f"🔍 Processing tenant: {company_id}/{tenant_id}")
+                try:
+                    result = update_overdue_invoices(company_id, tenant_id)
+                    total_updated += result["updated"]
+                    total_skipped += result["skipped"]
+                except Exception as e:
+                    print(f"⚠️ Error processing tenant {company_id}/{tenant_id}: {e}")
+            
+            companies_processed += 1
+        
+        summary = {
+            "companies_processed": companies_processed,
+            "total_updated": total_updated,
+            "total_skipped": total_skipped,
+            "message": f"Processed {companies_processed} companies, updated {total_updated} overdue invoices"
+        }
+        print(f"✅ {summary['message']}")
+        return summary
+        
+    except Exception as e:
+        print(f"❌ Failed to update all overdue invoices: {e}")
         raise

@@ -87,3 +87,47 @@ def get_invoice_by_id(invoice_id: str) -> Dict[str, Any]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve invoice: {str(e)}"
         )
+
+
+@router.post("/update-overdue-invoices")
+def update_overdue_invoices_endpoint(
+    company_id: str | None = Query(None, description="Optional: Specific company ID to update"),
+    tenant_id: str | None = Query(None, description="Optional: Specific tenant ID to update")
+) -> Dict[str, Any]:
+    """
+    Updates all pending invoices that are past their due date to 'due' status.
+    
+    - If company_id is provided, updates only that company's invoices
+    - If company_id and tenant_id are provided, updates only that tenant's invoices
+    - If neither is provided, updates all companies
+    
+    This endpoint can be called:
+    1. Manually when needed
+    2. By a scheduled task/cron job (recommended: daily)
+    3. Before generating reports
+    """
+    from repositories.bill_repo import update_overdue_invoices, update_all_overdue_invoices
+    
+    try:
+        if company_id:
+            # Update specific company or tenant
+            result = update_overdue_invoices(company_id, tenant_id)
+            return {
+                "status": "success",
+                "scope": f"company: {company_id}" + (f", tenant: {tenant_id}" if tenant_id else ""),
+                **result
+            }
+        else:
+            # Update all companies
+            result = update_all_overdue_invoices()
+            return {
+                "status": "success",
+                "scope": "all companies",
+                **result
+            }
+    except Exception as e:
+        print(f"❌ Error updating overdue invoices: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update overdue invoices: {str(e)}"
+        )
