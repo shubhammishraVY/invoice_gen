@@ -35,6 +35,7 @@ app.add_middleware(
         "http://portal.vysedeck.com:5173",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://127.0.0.1:8000"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -42,7 +43,7 @@ app.add_middleware(
 )
 
 # Include routers
- 
+app.include_router(billing_routes.router, tags=["Billing"])
 app.include_router(invoice_routes.router, tags=["Invoices"])
 app.include_router(payment_routes.router, prefix="/payments", tags=["Payments"])
 app.include_router(webhook_routes.router, prefix="/webhooks", tags=["Webhooks"])
