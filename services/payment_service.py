@@ -115,7 +115,7 @@ def generate_payment_receipt(payment_data: dict):
             "payment_date": receipt_data["payment_date"],
             "currency_symbol": receipt_data["currency_symbol"],
             "sender_email": os.getenv("SENDER_EMAIL"),
-            "payment_url": f"{os.getenv('FRONTEND_URL', 'http://portal.vysedeck.com:5173')}/payments",
+            "payment_url": f"{os.getenv('FRONTEND_URL', 'https://billai.vysedeck.com')}/payments",
         }
 
         send_email(

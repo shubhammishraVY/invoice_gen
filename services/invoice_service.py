@@ -8,7 +8,7 @@ from utils.date_utils import localize_datetime_fields
 from utils.invoice_token import generate_invoice_token
 import os
 
-FRONTEND_PAYMENT_URL = os.getenv("FRONTEND_PAYMENT_URL", "https://portal.vysedeck.com/pay")
+FRONTEND_PAYMENT_URL = os.getenv("FRONTEND_PAYMENT_URL", "https://billai.vysedeck.com/pay")
 
 def _construct_csv_filepath(company_id: str, start_date_str: str, end_date_str: str) -> str:
     """Helper to construct expected CSV path."""
@@ -71,7 +71,7 @@ def send_invoice_to_client(invoice_data: dict, isSubEntity: bool):
         # NOTE: token generation is left in place but we use the hardcoded payment URL
         # per request (no token appended).
         # Using provided hardcoded URL now:
-        payment_url = "http://portal.vysedeck.com:5173/login"
+        payment_url = "https://billai.vysedeck.com/login"
 
         context = {
             "legalName": vendor_info.get("legalName"),

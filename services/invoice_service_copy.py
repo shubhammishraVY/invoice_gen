@@ -10,7 +10,7 @@ from services.mailer_service import send_email
 from utils.date_utils import localize_datetime_fields
 from utils.invoice_token import generate_invoice_token
 
-FRONTEND_PAYMENT_URL = os.getenv("FRONTEND_PAYMENT_URL", "http://portal.vysedeck.com:5173/login")
+FRONTEND_PAYMENT_URL = os.getenv("FRONTEND_PAYMENT_URL", "https://billai.vysedeck.com/login")
 
 
 def _construct_csv_filepath(company_id: str, start_date_str: str, end_date_str: str) -> str:
