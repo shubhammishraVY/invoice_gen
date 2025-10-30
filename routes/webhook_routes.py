@@ -46,11 +46,10 @@ async def razorpay_webhook(request: Request):
     signature = request.headers.get("X-Razorpay-Signature")
     secret = os.getenv("RAZORPAY_KEY_SECRET")
 
-    # Optional: Verify webhook signature (recommended for production)
-    # generated_signature = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
-    # if generated_signature != signature:
-    #     print("❌ Webhook signature mismatch")
-    #     raise HTTPException(status_code=400, detail="Signature mismatch")
+    generated_signature = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
+    if generated_signature != signature:
+        print("❌ Webhook signature mismatch")
+        raise HTTPException(status_code=400, detail="Signature mismatch")
 
     event = await request.json()
     
