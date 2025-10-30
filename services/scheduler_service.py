@@ -36,6 +36,28 @@ def update_overdue_invoices_job():
         print(f"❌ Error in scheduled task 'update_overdue_invoices_job': {e}")
 
 
+def check_payment_reminders_job():
+    """
+    Scheduled job that runs daily to check for payment reminders.
+    Sends reminder emails for:
+    - Invoices 3 days after invoice_date (first reminder)
+    - Invoices on due_date (final reminder)
+    """
+    try:
+        print(f"\n🕐 [{datetime.now()}] Running scheduled task: Check Payment Reminders")
+        
+        from services.invoice_service import check_and_send_payment_reminders
+        
+        result = check_and_send_payment_reminders()
+        
+        print(f"✅ Scheduled task completed:")
+        print(f"   - First reminders sent: {result.get('first_reminders_sent', 0)}")
+        print(f"   - Final reminders sent: {result.get('final_reminders_sent', 0)}")
+        
+    except Exception as e:
+        print(f"❌ Error in scheduled task 'check_payment_reminders_job': {e}")
+
+
 def start_scheduler(run_on_startup=True):
     """
     Initializes and starts the background scheduler.
@@ -55,6 +77,8 @@ def start_scheduler(run_on_startup=True):
         if run_on_startup:
             print("\n🔥 Running overdue invoice update on startup...")
             update_overdue_invoices_job()
+            print("\n🔥 Running payment reminders check on startup...")
+            check_payment_reminders_job()
             print("")
         
         # Create scheduler
@@ -70,13 +94,25 @@ def start_scheduler(run_on_startup=True):
             misfire_grace_time=3600  # If missed, can run within 1 hour
         )
         
+        # Schedule: Check payment reminders at 9:00 AM IST daily
+        scheduler.add_job(
+            func=check_payment_reminders_job,
+            trigger=CronTrigger(hour=9, minute=0, timezone='Asia/Kolkata'),
+            id='check_payment_reminders',
+            name='Check and Send Payment Reminders',
+            replace_existing=True,
+            misfire_grace_time=3600  # If missed, can run within 1 hour
+        )
+        
         # Start the scheduler
         scheduler.start()
         
         print("✅ Background Scheduler Started Successfully")
         print("📅 Scheduled Tasks:")
         print("   - Update Overdue Invoices: Daily at 00:00 IST (midnight)")
-        print(f"   - Next scheduled run: {scheduler.get_jobs()[0].next_run_time}")
+        print("   - Check Payment Reminders: Daily at 09:00 IST")
+        for job in scheduler.get_jobs():
+            print(f"   - {job.name}: Next run at {job.next_run_time}")
         print("\n💡 TIP: To disable startup update, set run_on_startup=False in main.py\n")
         
         return scheduler
@@ -138,3 +174,12 @@ def run_overdue_update_now():
     """
     print("🔄 Manually triggering overdue invoice update...")
     update_overdue_invoices_job()
+
+
+def run_payment_reminders_now():
+    """
+    Manually triggers the payment reminders check job immediately.
+    Useful for testing or on-demand checks.
+    """
+    print("🔄 Manually triggering payment reminders check...")
+    check_payment_reminders_job()

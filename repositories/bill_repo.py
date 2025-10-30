@@ -326,3 +326,66 @@ def update_all_overdue_invoices():
     except Exception as e:
         print(f"❌ Failed to update all overdue invoices: {e}")
         raise
+
+
+def get_all_pending_invoices():
+    """
+    Fetches all invoices with payment_status='pending' across all companies and tenants.
+    
+    Returns:
+        list: List of dictionaries containing invoice data with metadata
+              Each dict contains: invoice_data, company_id, tenant_id (or None)
+    """
+    try:
+        pending_invoices = []
+        
+        # Get all companies
+        companies_ref = firestore_client.collection("companies")
+        companies = companies_ref.stream()
+        
+        for company_doc in companies:
+            company_id = company_doc.id
+            
+            # Query top-level invoices for this company
+            try:
+                invoices_ref = company_doc.reference.collection("invoiceTest")
+                pending_query = invoices_ref.where("payment_status", "==", PaymentStatus.PENDING.value)
+                
+                for invoice_doc in pending_query.stream():
+                    invoice_data = invoice_doc.to_dict()
+                    invoice_data["invoice_id"] = invoice_doc.id
+                    pending_invoices.append({
+                        "invoice_data": invoice_data,
+                        "company_id": company_id,
+                        "tenant_id": None
+                    })
+            except Exception as e:
+                print(f"⚠️ Error fetching invoices for company {company_id}: {e}")
+            
+            # Query tenant invoices
+            tenants_ref = company_doc.reference.collection("tenants")
+            tenants = tenants_ref.stream()
+            
+            for tenant_doc in tenants:
+                tenant_id = tenant_doc.id
+                try:
+                    tenant_invoices_ref = tenant_doc.reference.collection("invoiceTest")
+                    tenant_pending_query = tenant_invoices_ref.where("payment_status", "==", PaymentStatus.PENDING.value)
+                    
+                    for invoice_doc in tenant_pending_query.stream():
+                        invoice_data = invoice_doc.to_dict()
+                        invoice_data["invoice_id"] = invoice_doc.id
+                        pending_invoices.append({
+                            "invoice_data": invoice_data,
+                            "company_id": company_id,
+                            "tenant_id": tenant_id
+                        })
+                except Exception as e:
+                    print(f"⚠️ Error fetching invoices for tenant {company_id}/{tenant_id}: {e}")
+        
+        print(f"📋 Found {len(pending_invoices)} pending invoices")
+        return pending_invoices
+        
+    except Exception as e:
+        print(f"❌ Failed to fetch pending invoices: {e}")
+        raise

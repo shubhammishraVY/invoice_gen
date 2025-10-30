@@ -1,0 +1,164 @@
+<html>
+  <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333">
+    <p>Dear Sir/Madam,</p>
+
+    <p>Greetings from <strong>{{legalName}}</strong>!</p>
+
+    <p
+      style="
+        background-color: #f8d7da;
+        padding: 15px;
+        border-left: 4px solid #dc3545;
+        margin: 20px 0;
+        font-size: 15px;
+      "
+    >
+      🚨 <strong>URGENT: Final Payment Reminder</strong><br />
+      This is to remind you that <strong>TODAY ({{due_date}})</strong> is the
+      last date for payment of invoice <strong>{{invoice_number}}</strong>.
+    </p>
+
+    <p>
+      The invoice was issued for Voice Agent services consumed during the
+      billing period
+      <strong>{{start_date}} to {{end_date}}</strong>.
+    </p>
+
+    <div
+      style="
+        background-color: #f5f7fa;
+        padding: 20px;
+        border-left: 4px solid #104084;
+        margin: 20px 0;
+      "
+    >
+      <h3 style="color: #104084; margin-top: 0">Invoice Summary</h3>
+      <table style="width: 100%; border-collapse: collapse">
+        <tr>
+          <td style="padding: 8px 0"><strong>Invoice Number:</strong></td>
+          <td style="padding: 8px 0; text-align: right">{{invoice_number}}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0"><strong>Invoice Date:</strong></td>
+          <td style="padding: 8px 0; text-align: right">{{invoice_date}}</td>
+        </tr>
+        <tr style="background-color: #fff3cd">
+          <td style="padding: 8px 0"><strong>Due Date:</strong></td>
+          <td style="padding: 8px 0; text-align: right; color: #dc3545">
+            <strong>{{due_date}} (TODAY)</strong>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; padding-top: 15px">
+            <strong>Total Calls:</strong>
+          </td>
+          <td style="padding: 8px 0; padding-top: 15px; text-align: right">
+            {{total_calls}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0"><strong>Total Billed Minutes:</strong></td>
+          <td style="padding: 8px 0; text-align: right">
+            {{total_billed_minutes}} minutes
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0">
+            <strong
+              >Call Charges (@
+              {{currency_symbol}}{{rate_per_minute}}/min):</strong
+            >
+          </td>
+          <td style="padding: 8px 0; text-align: right">
+            {{currency_symbol}} {{call_charges}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0"><strong>Maintenance Charge:</strong></td>
+          <td style="padding: 8px 0; text-align: right">
+            {{currency_symbol}} {{maintenance_fee}}
+          </td>
+        </tr>
+        <tr style="border-top: 1px solid #ddd">
+          <td style="padding: 8px 0"><strong>Subtotal:</strong></td>
+          <td style="padding: 8px 0; text-align: right">
+            {{currency_symbol}} {{subtotal}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0"><strong>GST ({{gst_rate}}%):</strong></td>
+          <td style="padding: 8px 0; text-align: right">
+            {{currency_symbol}} {{gst_amount}}
+          </td>
+        </tr>
+        <tr style="border-top: 2px solid #dc3545; background-color: #f8d7da">
+          <td style="padding: 12px 0; font-size: 18px">
+            <strong>Total Amount Due:</strong>
+          </td>
+          <td
+            style="
+              padding: 12px 0;
+              text-align: right;
+              font-size: 18px;
+              color: #dc3545;
+            "
+          >
+            <strong>{{currency_symbol}} {{total_amount}}</strong>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="font-size: 15px">
+      <strong>⚠️ Important:</strong> Please process the payment immediately to
+      avoid late payment charges and potential service disruption.
+    </p>
+
+    <p>
+      We have attached the complete invoice PDF for your reference. If you have
+      already made the payment, please disregard this reminder and accept our
+      apologies for any inconvenience.
+    </p>
+
+    <p>
+      For immediate payment processing or any urgent queries, please contact us
+      right away.
+    </p>
+
+    <div style="text-align: center; margin-top: 25px">
+      <a
+        href="{{payment_url}}"
+        style="
+          background-color: #dc3545;
+          color: white;
+          padding: 14px 28px;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: bold;
+          font-size: 16px;
+        "
+      >
+        Make Payment Now
+      </a>
+    </div>
+
+    <br />
+    <p>We appreciate your immediate attention to this matter.</p>
+
+    <p>
+      Best regards,<br />
+      <strong>VYSEDECK Billing Team</strong><br />
+      VYSEDECK AI Ventures Pvt Ltd<br />
+      Email: {{sender_email}}<br />
+      Phone: +919930034914
+    </p>
+
+    <hr style="border: 0; border-top: 1px solid #eee; margin-top: 30px" />
+    <p style="font-size: 11px; color: #777">
+      <em
+        >This is an automated email. Please do not reply directly to this
+        address. For support, contact us at the details provided above.</em
+      >
+    </p>
+  </body>
+</html>
