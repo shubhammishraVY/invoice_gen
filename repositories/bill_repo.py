@@ -9,9 +9,9 @@ def get_invoice(company: str, tenant: str | None, start_date: str, end_date: str
     Fetch invoice for a given company and billing period if it exists.
     """
     if tenant is None:
-        invoices_ref = firestore_client.collection("companies").document(company).collection("invoiceTest")
+        invoices_ref = firestore_client.collection("companies").document(company).collection("invoices")
     else:
-        invoices_ref = firestore_client.collection("companies").document(company).collection("tenants").document(tenant).collection("invoiceTest")
+        invoices_ref = firestore_client.collection("companies").document(company).collection("tenants").document(tenant).collection("invoices")
     query = (
         invoices_ref
         .where("billingPeriod.startDate", "==", start_date)
@@ -36,9 +36,9 @@ def save_invoice(company_id: str, tenant_id: str | None, invoice_data: dict):
         raise ValueError(f"Invoice data validation failed for company {company_id}: {e}")
 
     if tenant_id is None:
-        invoices_ref = (firestore_client.collection("companies").document(company_id).collection("invoiceTest"))
+        invoices_ref = (firestore_client.collection("companies").document(company_id).collection("invoices"))
     else:
-        invoices_ref = (firestore_client.collection("companies").document(company_id).collection("tenants").document(tenant_id).collection("invoiceTest"))
+        invoices_ref = (firestore_client.collection("companies").document(company_id).collection("tenants").document(tenant_id).collection("invoices"))
 
     # 2. Deterministic ID generation from billing period
     billing_period = invoice_data.get("billingPeriod", {})
@@ -136,7 +136,7 @@ def mark_invoice_as_paid(company_id: str, invoice_number: str, payment_data: dic
             firestore_client
             .collection("companies")
             .document(company_id)
-            .collection("invoiceTest")
+            .collection("invoices")
             .document(invoice_number)
         )
 
@@ -202,7 +202,7 @@ def update_overdue_invoices(company_id: str, tenant_id: str | None = None):
                 firestore_client
                 .collection("companies")
                 .document(company_id)
-                .collection("invoiceTest")
+                .collection("invoices")
             )
         else:
             invoices_ref = (
@@ -211,7 +211,7 @@ def update_overdue_invoices(company_id: str, tenant_id: str | None = None):
                 .document(company_id)
                 .collection("tenants")
                 .document(tenant_id)
-                .collection("invoiceTest")
+                .collection("invoices")
             )
         
         # Query for pending invoices
@@ -348,7 +348,7 @@ def get_all_pending_invoices():
             
             # Query top-level invoices for this company
             try:
-                invoices_ref = company_doc.reference.collection("invoiceTest")
+                invoices_ref = company_doc.reference.collection("invoices")
                 pending_query = invoices_ref.where("payment_status", "==", PaymentStatus.PENDING.value)
                 
                 for invoice_doc in pending_query.stream():
@@ -369,7 +369,7 @@ def get_all_pending_invoices():
             for tenant_doc in tenants:
                 tenant_id = tenant_doc.id
                 try:
-                    tenant_invoices_ref = tenant_doc.reference.collection("invoiceTest")
+                    tenant_invoices_ref = tenant_doc.reference.collection("invoices")
                     tenant_pending_query = tenant_invoices_ref.where("payment_status", "==", PaymentStatus.PENDING.value)
                     
                     for invoice_doc in tenant_pending_query.stream():

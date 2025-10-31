@@ -4,7 +4,6 @@ from repositories.companies_repo import get_company_billing_details
 from repositories.bill_repo import save_invoice, get_invoice
 import math
 from services.csv_service import generate_call_log_csv
-from reqResVal_models.billing_models import PaymentStatus
 
 # Use the current time for reference
 NOW = datetime.now(timezone.utc)
@@ -138,6 +137,77 @@ def _serialize_dates(obj):
         return obj
 
 
+def _fetch_billing_and_vendor_details(company: str, tenant: str, isSubEntity: bool):
+    """
+    Fetch billing details and vendor details based on entity type.
+    
+    Args:
+        company: Parent company ID
+        tenant: Tenant/client ID
+        isSubEntity: Whether this is a sub-entity relationship
+    
+    Returns:
+        tuple: (billing_details, vendor_details)
+    
+    Raises:
+        ValueError: If billing details cannot be found
+    """
+    if isSubEntity:
+        billing_details = get_company_billing_details(company_id=company, tenant_id=tenant)
+    else:
+        billing_details = get_company_billing_details(company_id=tenant, tenant_id=None)
+    
+    vendor_details = get_company_billing_details(company_id=company, tenant_id=None)
+    
+    if not billing_details or not vendor_details:
+        raise ValueError(f"No billing details found for company {company} and for tenant {tenant}")
+    
+    return billing_details, vendor_details
+
+
+def _build_vendor_info(vendor_details: dict) -> dict:
+    """
+    Build vendor info dictionary from vendor details.
+    
+    Args:
+        vendor_details: Raw vendor details from database
+    
+    Returns:
+        dict: Structured vendor info with id, legalName, billingEmail, and billingAddress
+    """
+    vendor_billingInfo = vendor_details.get("billingInfo", {})
+    vendor_active_address = next(
+        (addr for addr in vendor_billingInfo.get("billingAddresses", []) if addr.get("isActive")),
+        None
+    )
+    
+    return {
+        "id": vendor_details.get("id"),
+        "legalName": vendor_billingInfo.get("legalName"),
+        "billingEmail": vendor_billingInfo.get("billingEmail"),
+        "billingAddress": vendor_active_address,
+    }
+
+
+def _enrich_invoice_with_metadata(invoice_data: dict, invoice_id: str, tzone: str, vendor_info: dict) -> dict:
+    """
+    Add metadata fields to invoice data that are needed by invoice_service.
+    
+    Args:
+        invoice_data: Invoice data dictionary
+        invoice_id: Unique invoice ID
+        tzone: Timezone string
+        vendor_info: Vendor information dictionary
+    
+    Returns:
+        dict: Invoice data enriched with metadata
+    """
+    invoice_data["invoice_number"] = invoice_id
+    invoice_data["tzone"] = tzone
+    invoice_data["vendorInfo"] = vendor_info
+    return invoice_data
+
+
 
 def generate_monthly_bill( company: str, tenant: str, isSubEntity: bool, month: int | None = None, year: int | None = None ):
     """
@@ -179,38 +249,33 @@ def generate_monthly_bill( company: str, tenant: str, isSubEntity: bool, month: 
     start_date_str = start_date.isoformat()
     end_date_str = end_date.isoformat()
 
-    # 🔹 Check if invoice already exists
+    # --- 4. Fetch billing and vendor details (used by both existing and new invoices) ---
+    billing_details, vendor_details = _fetch_billing_and_vendor_details(company, tenant, isSubEntity)
+    
+    tzone = billing_details.get("tzone")
+    vendor_info = _build_vendor_info(vendor_details)
+
+    # --- 5. Check if invoice already exists ---
     if isSubEntity:
         existing_invoice = get_invoice(company=company, tenant=tenant, start_date=start_date_str, end_date=end_date_str)
     else:
         existing_invoice = get_invoice(company=tenant, tenant=None, start_date=start_date_str, end_date=end_date_str)
+    
     if existing_invoice:
         print("Returning existing invoice:", existing_invoice["id"])
-        # FIX: Ensure existing invoice also has the invoice_number field for pdf_service
-        existing_invoice["invoice_number"] = existing_invoice["id"] 
-        return existing_invoice
+        return _enrich_invoice_with_metadata(existing_invoice, existing_invoice["id"], tzone, vendor_info)
     
+    # --- 6. Generate new invoice ---
     
-    # 🔹 Else generating invoice
-
-    # Fetch company billing details
-    if isSubEntity:
-        billing_details = get_company_billing_details( company_id=company, tenant_id=tenant )
-    else:
-        billing_details = get_company_billing_details( company_id=tenant, tenant_id=None )
-    vendor_details = get_company_billing_details( company_id=company, tenant_id=None )
-    if not billing_details or not vendor_details:
-        raise ValueError(f"No billing details found for company {company} and for tenant {tenant}")
-
+    # Extract billing configuration (billing_details and vendor_details already fetched above)
     billing = billing_details.get("billing", {})
     billingInfo = billing_details.get("billingInfo", {})
-    vendor_billingInfo = vendor_details.get("billingInfo", {})
+    # vendor_billingInfo = vendor_details.get("billingInfo", {})
 
     # Shorthand usage
     ratePerMin = billing_details.get("ratePerMinute") or 0
     gstRate = billing_details.get("gstRate") or 0
     maintenanceFee = billing_details.get("maintenanceFee") or 0
-    tzone = billing_details.get("tzone")
 
     # Fetch calls from both sources
     if isSubEntity:
@@ -273,13 +338,7 @@ def generate_monthly_bill( company: str, tenant: str, isSubEntity: bool, month: 
         "billingAddress": active_address,  # only active one
     }
 
-    vendor_active_address = next((addr for addr in vendor_billingInfo.get("billingAddresses", []) if addr.get("isActive")), None) 
-    vendor_info = {
-        "id": vendor_details.get("id"),
-        "legalName": vendor_billingInfo.get("legalName"),
-        "billingEmail": vendor_billingInfo.get("billingEmail"),
-        "billingAddress": vendor_active_address, 
-    }
+    # Note: vendor_info is already built earlier using _build_vendor_info()
 
     # --- Invoice metadata ---
     invoice_date = NOW # Use the current time for the invoice generation date
@@ -314,7 +373,7 @@ def generate_monthly_bill( company: str, tenant: str, isSubEntity: bool, month: 
             "designation": "Finance Department",
             "company": vendor_info.get("legalName")
         },
-        "payment_status": PaymentStatus.PENDING.value
+        "payment_status": "pending"
     }
 
     invoice_data = _serialize_dates(invoice_data)  
@@ -326,9 +385,5 @@ def generate_monthly_bill( company: str, tenant: str, isSubEntity: bool, month: 
 
     print("the saved invoice details are: ",saved_invoice.get("id"))
     
-    # CRITICAL: Add the unique doc ID to the data, which pdf_service uses for file naming.
-    invoice_data["invoice_number"] = saved_invoice.get("id")
-    invoice_data["tzone"] = tzone
-    invoice_data["vendorInfo"] = vendor_info
-
-    return invoice_data
+    # Add metadata fields using the same helper function
+    return _enrich_invoice_with_metadata(invoice_data, saved_invoice.get("id"), tzone, vendor_info)
