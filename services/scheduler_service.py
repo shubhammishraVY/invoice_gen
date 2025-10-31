@@ -58,7 +58,7 @@ def check_payment_reminders_job():
         print(f"❌ Error in scheduled task 'check_payment_reminders_job': {e}")
 
 
-def start_scheduler(run_on_startup=True):
+def start_scheduler(run_on_startup=False):
     """
     Initializes and starts the background scheduler.
     Schedules the overdue invoice update to run daily at midnight (IST).
@@ -167,19 +167,19 @@ def get_scheduler_status():
 
 
 # For testing: Run the job immediately
-def run_overdue_update_now():
-    """
-    Manually triggers the overdue invoice update job immediately.
-    Useful for testing or on-demand updates.
-    """
-    print("🔄 Manually triggering overdue invoice update...")
-    update_overdue_invoices_job()
+# def run_overdue_update_now():
+#     """
+#     Manually triggers the overdue invoice update job immediately.
+#     Useful for testing or on-demand updates.
+#     """
+#     print("🔄 Manually triggering overdue invoice update...")
+#     update_overdue_invoices_job()
 
 
-def run_payment_reminders_now():
-    """
-    Manually triggers the payment reminders check job immediately.
-    Useful for testing or on-demand checks.
-    """
-    print("🔄 Manually triggering payment reminders check...")
-    check_payment_reminders_job()
+# def run_payment_reminders_now():
+#     """
+#     Manually triggers the payment reminders check job immediately.
+#     Useful for testing or on-demand checks.
+#     """
+#     print("🔄 Manually triggering payment reminders check...")
+#     check_payment_reminders_job()

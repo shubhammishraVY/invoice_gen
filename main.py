@@ -13,7 +13,7 @@ async def lifespan(app: FastAPI):
     
     # 🔥 run_on_startup=True: Updates DB immediately when server starts (for testing)
     # 💡 Later, change to run_on_startup=False to only run at midnight
-    start_scheduler(run_on_startup=True)
+    start_scheduler(run_on_startup=False)
     
     yield  # Application runs here
     
@@ -56,20 +56,20 @@ def root():
     return {"message": "Billing & Payment API is running 🚀"}
 
 
-@app.get("/scheduler/status")
-def scheduler_status():
-    """
-    Check the status of the background scheduler and scheduled jobs.
-    """
-    from services.scheduler_service import get_scheduler_status
-    return get_scheduler_status()
+# @app.get("/scheduler/status")
+# def scheduler_status():
+#     """
+#     Check the status of the background scheduler and scheduled jobs.
+#     """
+#     from services.scheduler_service import get_scheduler_status
+#     return get_scheduler_status()
 
 
-@app.post("/scheduler/run-now")
-def run_scheduler_now():
-    """
-    Manually trigger the overdue invoice update immediately (for testing/emergency).
-    """
-    from services.scheduler_service import run_overdue_update_now
-    run_overdue_update_now()
-    return {"message": "Overdue invoice update triggered manually"}
+# @app.post("/scheduler/run-now")
+# def run_scheduler_now():
+#     """
+#     Manually trigger the overdue invoice update immediately (for testing/emergency).
+#     """
+#     from services.scheduler_service import run_overdue_update_now
+#     run_overdue_update_now()
+#     return {"message": "Overdue invoice update triggered manually"}
