@@ -136,6 +136,9 @@ def verify_razorpay_payment(
     print("🔐 VERIFYING RAZORPAY PAYMENT")
     print(f"Payment ID: {razorpay_payment_id}")
     print(f"Order ID: {razorpay_order_id}")
+    print(f"Company ID: {company_id}")
+    print(f"Tenant ID: {tenant_id}")
+    print(f"Invoice ID: {invoice_id}")
     
     try:
         # 1️⃣ Verify signature
@@ -155,7 +158,7 @@ def verify_razorpay_payment(
             **invoice_data,  # Include all invoice data
             "invoice_number": invoice_id,
             "companyId": company_id,
-            "tenant_id": tenant_id,
+            "tenant_id": tenant_id,  # ✅ IMPORTANT: Include tenant_id
             "payment_id": razorpay_payment_id,
             "order_id": razorpay_order_id,
             "razorpay_signature": razorpay_signature,
@@ -211,9 +214,12 @@ def generate_payment_receipt(payment_data: dict):
         payment_mode = payment_data.get("payment_mode", "Online")
         currency = payment_data.get("currency", "INR")
         companyId = payment_data.get("companyId")
+        tenant_id = payment_data.get("tenant_id")  # 🔧 FIX: Extract tenant_id
 
         print(f"📄 Generating receipt for invoice {invoice_number}")
         print(f"   Company: {company_name}")
+        print(f"   Company ID: {companyId}")
+        print(f"   Tenant ID: {tenant_id}")  # 🔧 FIX: Log tenant_id
         print(f"   Amount: {total_amount} {currency}")
         print(f"   Payment ID: {payment_id}")
 
@@ -262,6 +268,7 @@ def generate_payment_receipt(payment_data: dict):
         print(f"✅ Payment receipt emailed successfully to vishruth.ramesh@vysedeck.com")
 
         # --- 3️⃣ Save COMPLETE Payment Record in payments collection ---
+        # 🔧 FIX: Pass tenant_id to save_payment_record
         save_payment_record(companyId, {
             "payment_id": payment_id,
             "invoice_number": invoice_number,
@@ -271,11 +278,12 @@ def generate_payment_receipt(payment_data: dict):
             "payment_mode": payment_mode,
             "razorpay_order_id": payment_data.get("order_id"),
             "razorpay_signature": payment_data.get("razorpay_signature"),
-        })
+        }, tenant_id=tenant_id)
         print(f"✅ Payment record saved in Firestore")
 
         # --- 4️⃣ Update ONLY payment_status in invoice ---
-        mark_invoice_as_paid(companyId, invoice_number, {})
+        # 🔧 FIX: Pass tenant_id to mark_invoice_as_paid
+        mark_invoice_as_paid(companyId, invoice_number, {}, tenant_id=tenant_id)
         print(f"✅ Invoice {invoice_number} marked as paid")
 
         return {"status": "success", "receipt_pdf": pdf_path}
