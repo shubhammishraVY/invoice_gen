@@ -76,11 +76,18 @@ def save_invoice(company_id: str, tenant_id: str | None, invoice_data: dict):
 
 
 
-def save_payment_record(company_id: str, payment_data: dict):
+def save_payment_record(company_id: str, payment_data: dict, tenant_id: str | None = None):
     """
     Saves complete payment record under the company's 'payments' subcollection.
-    Document ID: REC_{invoice_number}
-    Path: companies/{company_id}/payments/REC_{invoice_number}
+    
+    Paths:
+    - Top-level: companies/{company_id}/payments/REC_{invoice_number}
+    - Tenant: companies/{company_id}/tenants/{tenant_id}/payments/REC_{invoice_number}
+    
+    Args:
+        company_id: Company ID
+        payment_data: Payment data dictionary
+        tenant_id: Optional tenant ID for nested structure
     """
     try:
         # Validate required data
@@ -92,13 +99,27 @@ def save_payment_record(company_id: str, payment_data: dict):
         if not invoice_number:
             raise ValueError("invoice_number is missing in payment_data")
 
-        # Reference to the subcollection path
-        payments_ref = (
-            firestore_client
-            .collection("companies")
-            .document(company_id)
-            .collection("payments")
-        )
+        # 🔧 FIX: Handle both top-level and tenant payment records
+        if tenant_id is None:
+            # Top-level payment record
+            payments_ref = (
+                firestore_client
+                .collection("companies")
+                .document(company_id)
+                .collection("payments")
+            )
+            print(f"📍 Saving top-level payment: companies/{company_id}/payments/REC_{invoice_number}")
+        else:
+            # Tenant payment record
+            payments_ref = (
+                firestore_client
+                .collection("companies")
+                .document(company_id)
+                .collection("tenants")
+                .document(tenant_id)
+                .collection("payments")
+            )
+            print(f"📍 Saving tenant payment: companies/{company_id}/tenants/{tenant_id}/payments/REC_{invoice_number}")
 
         # Complete payment record - NO receipt_pdf field
         payment_record = {
@@ -117,7 +138,10 @@ def save_payment_record(company_id: str, payment_data: dict):
         doc_id = f"REC_{invoice_number}"
         payments_ref.document(doc_id).set(payment_record)
 
-        print(f"✅ Payment record saved under {company_id}/payments/{doc_id}")
+        if tenant_id is None:
+            print(f"✅ Payment record saved under companies/{company_id}/payments/{doc_id}")
+        else:
+            print(f"✅ Payment record saved under companies/{company_id}/tenants/{tenant_id}/payments/{doc_id}")
 
     except Exception as e:
         print(f"❌ Failed to save payment record for {company_id}: {e}")
@@ -125,25 +149,49 @@ def save_payment_record(company_id: str, payment_data: dict):
 
 
 
-def mark_invoice_as_paid(company_id: str, invoice_number: str, payment_data: dict):
+def mark_invoice_as_paid(company_id: str, invoice_number: str, payment_data: dict, tenant_id: str | None = None):
     """
     Marks an invoice as paid - updates payment_status based on due date.
     - If paid before or on due date: status = "paid"
     - If paid after due date: status = "due_paid"
+    
+    Paths:
+    - Top-level: companies/{company_id}/invoices/{invoice_number}
+    - Tenant: companies/{company_id}/tenants/{tenant_id}/invoices/{invoice_number}
+    
+    Args:
+        company_id: Company ID
+        invoice_number: Invoice ID/number
+        payment_data: Payment data (currently unused but kept for backwards compatibility)
+        tenant_id: Optional tenant ID for nested invoices
     """
     try:
-        invoice_ref = (
-            firestore_client
-            .collection("companies")
-            .document(company_id)
-            .collection("invoices")
-            .document(invoice_number)
-        )
+        # 🔧 FIX: Handle both top-level and nested tenant invoices
+        if tenant_id is None:
+            invoice_ref = (
+                firestore_client
+                .collection("companies")
+                .document(company_id)
+                .collection("invoices")
+                .document(invoice_number)
+            )
+            print(f"📍 Updating top-level invoice: companies/{company_id}/invoices/{invoice_number}")
+        else:
+            invoice_ref = (
+                firestore_client
+                .collection("companies")
+                .document(company_id)
+                .collection("tenants")
+                .document(tenant_id)
+                .collection("invoices")
+                .document(invoice_number)
+            )
+            print(f"📍 Updating tenant invoice: companies/{company_id}/tenants/{tenant_id}/invoices/{invoice_number}")
 
         # Fetch the invoice to get the due date
         invoice_doc = invoice_ref.get()
         if not invoice_doc.exists:
-            raise ValueError(f"Invoice {invoice_number} not found")
+            raise ValueError(f"Invoice {invoice_number} not found at the expected path")
         
         invoice_data = invoice_doc.to_dict()
         due_date_str = invoice_data.get("dueDate")
