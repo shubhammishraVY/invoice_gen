@@ -1,5 +1,5 @@
+# services/payment_service.py
 import stripe
-import razorpay
 import os
 import hmac
 import hashlib
@@ -8,23 +8,21 @@ from datetime import datetime
 from services.pdf_service import generate_pdf
 from services.mailer_service import send_email
 from repositories.bill_repo import save_payment_record, mark_invoice_as_paid
+from services.razorpay_config import get_razorpay_client, get_razorpay_credentials
+
 load_dotenv()
 
 #--- Stripe Setup ---
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
-#--- Razorpay Setup ---
-RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
-RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
-
-razorpay_client = razorpay.Client(
-    auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)
-)
+# ❌ REMOVE THESE LINES - NO LONGER NEEDED
+# RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+# RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+# razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 def create_stripe_checkout_session(invoice_data):
     """
     Creates a Stripe checkout session for an invoice.
-
     """
     try:
         session = stripe.checkout.Session.create(
@@ -47,30 +45,54 @@ def create_stripe_checkout_session(invoice_data):
         return {"checkout_url": session.url}
     except Exception as e:
         raise Exception(f"Stripe session creation failed: {e}")
-    
+
 def create_razorpay_order(invoice_data):
+    """
+    Creates a Razorpay order for an invoice.
+    Now fetches company-specific credentials from Firestore.
+    """
     try:
+        company_id = invoice_data.get("companyId")
+        
+        if not company_id:
+            raise ValueError("Company ID not found in invoice data")
+        
+        print(f"🔵 Creating Razorpay order for company: {company_id}")
+        
+        # Get company-specific Razorpay client
+        razorpay_client = get_razorpay_client(company_id)
+        
+        # Create order
         order = razorpay_client.order.create({
             "amount": int(invoice_data["totalAmount"] * 100),
             "currency": "INR",
             "receipt": invoice_data["invoice_number"],
             "notes": {
                 "invoice_id": invoice_data["invoice_number"],
-                "company_id": invoice_data.get("companyId"),
+                "company_id": company_id,
                 "tenant_id": invoice_data.get("tenant_id", "default"),
             }
         })
+        
+        print(f"✅ Razorpay order created: {order['id']}")
         return order
+        
     except Exception as e:
+        print(f"❌ Razorpay order creation failed: {e}")
         raise Exception(f"Razorpay order creation failed: {e}")
 
 
-# ================== NEW FUNCTION: VERIFY RAZORPAY SIGNATURE ==================
-def verify_razorpay_signature(razorpay_order_id: str, razorpay_payment_id: str, razorpay_signature: str) -> bool:
+def verify_razorpay_signature(
+    company_id: str,
+    razorpay_order_id: str,
+    razorpay_payment_id: str,
+    razorpay_signature: str
+) -> bool:
     """
-    Verifies Razorpay payment signature to ensure payment authenticity.
+    Verifies Razorpay payment signature using company-specific credentials.
     
     Args:
+        company_id: Company ID to fetch credentials
         razorpay_order_id: Order ID from Razorpay
         razorpay_payment_id: Payment ID from Razorpay
         razorpay_signature: Signature from Razorpay
@@ -79,12 +101,15 @@ def verify_razorpay_signature(razorpay_order_id: str, razorpay_payment_id: str, 
         bool: True if signature is valid, False otherwise
     """
     try:
+        # Get company-specific credentials
+        _, key_secret = get_razorpay_credentials(company_id)
+        
         # Construct the message
         message = f"{razorpay_order_id}|{razorpay_payment_id}"
         
         # Generate expected signature using HMAC SHA256
         expected_signature = hmac.new(
-            RAZORPAY_KEY_SECRET.encode(),
+            key_secret.encode(),
             message.encode(),
             hashlib.sha256
         ).hexdigest()
@@ -106,7 +131,6 @@ def verify_razorpay_signature(razorpay_order_id: str, razorpay_payment_id: str, 
         return False
 
 
-# ================== NEW FUNCTION: VERIFY AND PROCESS PAYMENT ==================
 def verify_razorpay_payment(
     razorpay_payment_id: str,
     razorpay_order_id: str,
@@ -118,19 +142,7 @@ def verify_razorpay_payment(
 ) -> dict:
     """
     Verifies Razorpay payment signature and processes the payment.
-    This is the main function called after a successful Razorpay payment.
-    
-    Args:
-        razorpay_payment_id: Payment ID from Razorpay
-        razorpay_order_id: Order ID from Razorpay
-        razorpay_signature: Signature from Razorpay
-        invoice_data: Invoice data from Firestore
-        company_id: Company ID
-        tenant_id: Tenant ID (optional)
-        invoice_id: Invoice ID
-        
-    Returns:
-        dict: Result of payment processing
+    Now uses company-specific credentials.
     """
     print("=" * 50)
     print("🔐 VERIFYING RAZORPAY PAYMENT")
@@ -141,8 +153,13 @@ def verify_razorpay_payment(
     print(f"Invoice ID: {invoice_id}")
     
     try:
-        # 1️⃣ Verify signature
-        is_valid = verify_razorpay_signature(razorpay_order_id, razorpay_payment_id, razorpay_signature)
+        # 1️⃣ Verify signature using company-specific credentials
+        is_valid = verify_razorpay_signature(
+            company_id,
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature
+        )
         
         if not is_valid:
             print("❌ Invalid Razorpay signature - Payment verification failed!")
@@ -155,10 +172,10 @@ def verify_razorpay_payment(
         
         # 2️⃣ Prepare payment data for receipt generation
         payment_info = {
-            **invoice_data,  # Include all invoice data
+            **invoice_data,
             "invoice_number": invoice_id,
             "companyId": company_id,
-            "tenant_id": tenant_id,  # ✅ IMPORTANT: Include tenant_id
+            "tenant_id": tenant_id,
             "payment_id": razorpay_payment_id,
             "order_id": razorpay_order_id,
             "razorpay_signature": razorpay_signature,
@@ -201,7 +218,6 @@ def verify_razorpay_payment(
 def generate_payment_receipt(payment_data: dict):
     """
     Generates a payment receipt PDF and emails it to the client.
-    Reuses the generic PDF and mailer services.
     """
     try:
         company_info = payment_data.get("companyInfo", {})
@@ -214,12 +230,12 @@ def generate_payment_receipt(payment_data: dict):
         payment_mode = payment_data.get("payment_mode", "Online")
         currency = payment_data.get("currency", "INR")
         companyId = payment_data.get("companyId")
-        tenant_id = payment_data.get("tenant_id")  # 🔧 FIX: Extract tenant_id
+        tenant_id = payment_data.get("tenant_id")
 
         print(f"📄 Generating receipt for invoice {invoice_number}")
         print(f"   Company: {company_name}")
         print(f"   Company ID: {companyId}")
-        print(f"   Tenant ID: {tenant_id}")  # 🔧 FIX: Log tenant_id
+        print(f"   Tenant ID: {tenant_id}")
         print(f"   Amount: {total_amount} {currency}")
         print(f"   Payment ID: {payment_id}")
 
@@ -257,18 +273,16 @@ def generate_payment_receipt(payment_data: dict):
         }
 
         send_email(
-            # recipient_email=recipient_email,
-            recipient_email="vishruth.ramesh@vysedeck.com",  # for testing purposes
+            recipient_email="vishruth.ramesh@vysedeck.com",  # for testing
             subject=subject,
             html_template="receipt_email_template.html",
             context=context,
             attachments=[pdf_path],
         )
 
-        print(f"✅ Payment receipt emailed successfully to vishruth.ramesh@vysedeck.com")
+        print(f"✅ Payment receipt emailed successfully")
 
-        # --- 3️⃣ Save COMPLETE Payment Record in payments collection ---
-        # 🔧 FIX: Pass tenant_id to save_payment_record
+        # --- 3️⃣ Save payment record ---
         save_payment_record(companyId, {
             "payment_id": payment_id,
             "invoice_number": invoice_number,
@@ -279,10 +293,9 @@ def generate_payment_receipt(payment_data: dict):
             "razorpay_order_id": payment_data.get("order_id"),
             "razorpay_signature": payment_data.get("razorpay_signature"),
         }, tenant_id=tenant_id)
-        print(f"✅ Payment record saved in Firestore")
+        print(f"✅ Payment record saved")
 
-        # --- 4️⃣ Update ONLY payment_status in invoice ---
-        # 🔧 FIX: Pass tenant_id to mark_invoice_as_paid
+        # --- 4️⃣ Update invoice status ---
         mark_invoice_as_paid(companyId, invoice_number, {}, tenant_id=tenant_id)
         print(f"✅ Invoice {invoice_number} marked as paid")
 

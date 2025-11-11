@@ -1,6 +1,7 @@
 from fastapi import FastAPI
-from routes import billing_routes, payment_routes, webhook_routes, invoice_routes, call_logs_route
 from fastapi.middleware.cors import CORSMiddleware
+from db_configs.firebase_db import db  # This triggers Firebase initialization
+from routes import billing_routes, payment_routes, webhook_routes, invoice_routes, call_logs_route
 from contextlib import asynccontextmanager
 
 

@@ -1,9 +1,11 @@
+# webhook_routes.py
 from fastapi import APIRouter, Request, HTTPException
 import os, hmac, hashlib, stripe
 from dotenv import load_dotenv
 from datetime import datetime
 from services.payment_service import generate_payment_receipt
 from repositories.invoice_repo import get_invoice_by_id
+from services.razorpay_config import get_razorpay_credentials  # ✅ NEW IMPORT
 
 load_dotenv()
 router = APIRouter()
@@ -24,8 +26,6 @@ async def stripe_webhook(request: Request):
         session = event["data"]["object"]
         invoice_id = session["metadata"].get("invoice_id")
         print(f"✅ Stripe payment successful for invoice {invoice_id}")
-
-        # 🔹 Call your unified service
         generate_payment_receipt(invoice_id, payment_data=session)
 
     return {"status": "success"}
@@ -36,34 +36,49 @@ async def stripe_webhook(request: Request):
 async def razorpay_webhook(request: Request):
     """
     Razorpay webhook endpoint - serves as a BACKUP mechanism.
-    The primary payment verification happens via the /verify-payment endpoint.
-    This webhook ensures payments are recorded even if the frontend fails to call verify-payment.
+    Now uses company-specific credentials for signature verification.
     """
     print("=" * 50)
-    print("🔔 RAZORPAY WEBHOOK RECEIVED")
+    print("📩 RAZORPAY WEBHOOK RECEIVED")
     
     payload = await request.body()
     signature = request.headers.get("X-Razorpay-Signature")
-    secret = os.getenv("RAZORPAY_KEY_SECRET")
+    
+    # ⚠️ We need to get company_id from payload first to fetch the right secret
+    event = await request.json()
+    
+    # Extract company_id from notes
+    payment_data = event.get("payload", {}).get("payment", {}).get("entity", {})
+    company_id = payment_data.get("notes", {}).get("company_id")
+    
+    if not company_id:
+        print("❌ Company ID not found in webhook payload")
+        raise HTTPException(status_code=400, detail="Company ID not found in webhook")
+    
+    print(f"🏢 Company ID from webhook: {company_id}")
+    
+    # Fetch company-specific secret
+    try:
+        _, secret = get_razorpay_credentials(company_id)
+    except Exception as e:
+        print(f"❌ Failed to fetch Razorpay credentials: {e}")
+        raise HTTPException(status_code=400, detail="Failed to fetch Razorpay credentials")
 
+    # Verify signature
     generated_signature = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
     if generated_signature != signature:
         print("❌ Webhook signature mismatch")
         raise HTTPException(status_code=400, detail="Signature mismatch")
 
-    event = await request.json()
+    print("✅ Webhook signature verified")
     
     if event.get("event") == "payment.captured":
         print("✅ Payment captured event detected!")
         
-        payment_data = event["payload"]["payment"]["entity"]
-        
         # Extract invoice details from notes
         invoice_id = payment_data["notes"].get("invoice_id")
-        company_id = payment_data["notes"].get("company_id")
         tenant_id = payment_data["notes"].get("tenant_id")
         
-        # Handle "default" tenant
         if tenant_id == "default":
             tenant_id = None
         
@@ -80,14 +95,14 @@ async def razorpay_webhook(request: Request):
         
         print(f"✅ Invoice found")
         
-        # Check if already paid (to avoid duplicate processing)
+        # Check if already paid
         if invoice.get("payment_status") in ["paid", "due_paid"]:
             print(f"⚠️ Invoice {invoice_id} already marked as paid - skipping webhook processing")
             return {"status": "already_processed", "message": "Invoice already paid"}
         
-        # Prepare payment data for receipt generation
+        # Prepare payment data
         payment_info = {
-            **invoice,  # Spread invoice data
+            **invoice,
             "invoice_number": invoice_id,
             "companyId": company_id,
             "tenant_id": tenant_id,
