@@ -44,6 +44,7 @@ def create_razorpay_order_route( token: str = Query(...) ):
     company_id = payload["company_id"]
     tenant_id = payload.get("tenant_id")
     invoice_id = payload["invoice_id"]
+    payment_company_id = payload.get("payment_company_id")
     
     if tenant_id == "default":
         tenant_id = None
@@ -60,6 +61,7 @@ def create_razorpay_order_route( token: str = Query(...) ):
     
     # Add the invoice_id to the invoice data
     invoice["invoice_number"] = invoice_id
+    invoice["companyId"] = payment_company_id or company_id
     
     print("=" * 50)
     
@@ -70,6 +72,7 @@ def generate_payment_token(
     company_id: str = Query(...),
     tenant_id: str = Query(None),
     invoice_id: str = Query(...),
+    payment_company_id: str = Query(None),
     user: dict = Depends(verify_firebase_token)
 ):
     # Treat "default" tenant as None for downstream lookup
@@ -85,7 +88,12 @@ def generate_payment_token(
     print("=" * 50)
     
     try:
-        token = generate_invoice_token(company_id, tenant_id, invoice_id)
+        token = generate_invoice_token(
+            company_id, 
+            tenant_id, 
+            invoice_id, 
+            payment_company_id=payment_company_id
+        )
         
         print(f"✅ Token generated successfully")
         return {"token": token}
@@ -124,6 +132,7 @@ def verify_payment_endpoint(
     company_id = payload["company_id"]
     tenant_id = payload.get("tenant_id")
     invoice_id = payload["invoice_id"]
+    payment_company_id = payload.get("payment_company_id")
     
     # Handle "default" tenant
     if tenant_id == "default":
@@ -158,7 +167,8 @@ def verify_payment_endpoint(
             invoice_data=invoice,
             company_id=company_id,
             tenant_id=tenant_id,
-            invoice_id=invoice_id
+            invoice_id=invoice_id,
+            payment_company_id=payment_company_id
         )
         
         print(f"✅ Payment verification completed successfully")

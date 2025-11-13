@@ -138,7 +138,8 @@ def verify_razorpay_payment(
     invoice_data: dict,
     company_id: str,
     tenant_id: str | None,
-    invoice_id: str
+    invoice_id: str,
+    payment_company_id: str | None = None
 ) -> dict:
     """
     Verifies Razorpay payment signature and processes the payment.
@@ -153,9 +154,13 @@ def verify_razorpay_payment(
     print(f"Invoice ID: {invoice_id}")
     
     try:
-        # 1️⃣ Verify signature using company-specific credentials
+        # 1️⃣ Verify signature using domain owner's credentials
+        verification_company_id = payment_company_id or company_id
+
+        print(f"🔑 Using company '{verification_company_id}' for Razorpay credentials")
+
         is_valid = verify_razorpay_signature(
-            company_id,
+            verification_company_id,
             razorpay_order_id,
             razorpay_payment_id,
             razorpay_signature
